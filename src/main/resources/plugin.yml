@@ -1,0 +1,8 @@
+name: ${plugin_name}
+version: ${plugin_version}
+main: ${main_class}
+api-version: '1.21'
+authors: [ Diabet, Nova ]
+description: ${description}
+
+softdepend: [PlaceholderAPI]
