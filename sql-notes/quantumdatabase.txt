@@ -1,0 +1,60 @@
+# Database 
+
+
+-=- Players Table -=-
+	UUID text UNIQUE NOT NULL
+	Username varchar(16) NOT NULL
+	coins int NOT NULL
+	Rank char NOT NULL
+
+-=- Plot Coordinates Table -=-
+	X_coord float NOT NULL
+	Y_coord float NOT NULL
+	Z_coord float NOT NULL
+	F_coord float DEFAULT 0.0
+	P_coord float DEFAULT 90.0
+# F_coord is your horizontal facing value and P_coord is your vertical facing value
+
+-=- Saves Table -=-
+	Save-name varchar(30) NOT NULL
+	World varchar(30) NOT NULL
+	X_coord float NOT NULL
+	Y_coord float NOT NULL
+	Z_coord float NOT NULL
+	F_coord float NOT NULL
+	P_coord float NOT NULL
+# make sure that saves does not work for plot world (make a condition for that like if World.equals("plot-world")
+
+-=- Levels Table -=- 
+LevelID int UNIQUE NOT NULL AUTO_INCREMENT
+	Name varchar(30) NOT NULL
+	DisplayName varchar(50) NOT NULL
+	Difficulty int
+	Start_pos Coordinates NOT NULL
+	Max_completions int NOT NULL
+	Announce_completion bool NOT NULL
+	level_type enum NOT NULL
+	category enum 
+	potion_type enum 
+	release-date DATE NOT NULL
+# Decide whether or not to add players UUID(s) to the level or hardcode it yourself
+# Make a string of all potions available
+# Determine if whether or not we want we want to add the value NOT NULL in case if difficulty has not been officially finalized
+# Movement type: 0 normal, 1 only sprint, 2 no sprint
+# Category: 0 normal, 1 one jump, 2 rankup, 3 segmented, 4 speedrun, 5 sky, 6 endurance, 7 housing
+# Announce_completion: 0 = false; 1 = true
+
+Plot Table
+	UUID text NOT NULL references Players.UUID
+	plot-id UNIQUE NOT NULL AUTO INCREMENT
+	X_plot float NOT NULL
+	Z_plot float NOT NULL
+	Trusted-players UUID
+Notes: Plot trust enums; 0 no trust, 1 trust if player is on, 2 trust even if player is offline
+
+-=- PlotTrust Table -=- 
+	trusted-UUID text 
+	trust_level enum NOT NULL
+	
+# Todo:
+Determine if regions should be implemented for courses
