@@ -10,9 +10,10 @@ import com.quantumparkour.config.ConfigManager;
 import com.quantumparkour.config.QuantumConfig;
 import com.quantumparkour.listener.BlockEventListener;
 import com.quantumparkour.listener.CheckpointItemListener;
-import com.quantumparkour.listener.PlayerCollisionListener;
 import com.quantumparkour.listener.PlayerLeaveListener;
 import com.quantumparkour.listener.PlayerRespawnListener;
+//import com.quantumparkour.todo.QwobitManager;
+//import com.quantumparkour.todo.QwobitsCommand;
 import com.quantumparkour.util.PlaceholderAPIWrapper;
 
 import java.util.List;
@@ -23,6 +24,7 @@ public final class QuantumParkour extends JavaPlugin {
     private static CommandManager commandManager;
     private static ConfigManager configManager;
     private static PracManager pracManager;
+    //private static QwobitManager qwobitManager;
 
     @Override
     public void onEnable() {
@@ -33,10 +35,12 @@ public final class QuantumParkour extends JavaPlugin {
         commandManager = new CommandManager();
         configManager = new ConfigManager();
         pracManager = new PracManager();
+        //qwobitManager = new QwobitManager();
         registerEvents(
                 CheckpointItemListener::new,
                 PlayerLeaveListener::new,
-                PlayerRespawnListener::new
+                PlayerRespawnListener::new,
+                () -> new BlockEventListener(this)
         );
         commandManager.registerCommands(
                 CheckpointCommand::new,
@@ -44,12 +48,11 @@ public final class QuantumParkour extends JavaPlugin {
                 SetPracCommand::new,
                 SetSpawnCommand::new,
                 SpawnCommand::new,
-                UnpracCommand::new
+                UnpracCommand::new,
+                //QwobitsCommand::new // Register the new command here
         );
         configManager.registerConfigs(QuantumConfig.values());
-        
         Bukkit.getPluginManager().registerEvents(new BlockEventListener(this), this);
-        Bukkit.getPluginManager().registerEvents(new PlayerCollisionListener(), this);
     }
 
     @SafeVarargs
@@ -61,4 +64,5 @@ public final class QuantumParkour extends JavaPlugin {
     public static CommandManager getCommandManager() { return commandManager; }
     public static ConfigManager getConfigManager() { return configManager; }
     public static PracManager getPracManager() { return pracManager; }
+    //public static QwobitManager getQwobitManager() { return qwobitManager; }
 }

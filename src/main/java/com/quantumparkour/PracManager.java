@@ -16,7 +16,7 @@ public class PracManager implements Listener {
     private final Map<UUID, Location> pracCache = new HashMap<>();
     private final Map<UUID, Location> checkpointCache = new HashMap<>();
 
-    PracManager() {}
+    public PracManager() {}
 
     public Location getPracLocation(Player player) {
         return pracCache.get(player.getUniqueId());

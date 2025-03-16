@@ -1,8 +1,8 @@
-name: ${plugin_name}
-version: ${plugin_version}
-main: ${main_class}
+name: QuantumParkour
+version: 1.0.0
+main: com.quantumparkour.QuantumParkour
 api-version: '1.21'
 authors: [ Diabet, Nova ]
-description: ${description}
+description: Practice feature for Minecraft Parkour. Utilizes commands to set their checkpoint to practice a jump or multiple jumps using red dye and diamond NBT tags. Supports Minecraft Java Edition 1.21 on Paper.
 
-softdepend: [PlaceholderAPI]
+softdepend: [PlaceholderAPI, AnimatedScoreboard]
