@@ -6,9 +6,12 @@ import java.util.WeakHashMap;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.*;
+import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -171,6 +174,40 @@ public class BlockEventListener implements Listener {
         }.runTaskLater(plugin, 1L);
     }
 
+    @EventHandler
+    public void onEntityExplode(EntityExplodeEvent event) {
+        EntityType entityType = event.getEntityType();
+        if (entityType == EntityType.END_CRYSTAL || entityType == EntityType.TNT_MINECART) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onBedExplode(BlockExplodeEvent event) {
+        Block block = event.getBlock();
+        if (isBed(block.getType()) || block.getType() == Material.RESPAWN_ANCHOR) {
+            event.setCancelled(true);
+        }
+    }
+
+    @EventHandler
+    public void onBedOrAnchorUse(PlayerInteractEvent event) {
+        if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
+            Block block = event.getClickedBlock();
+            if (block == null) return;
+
+            Material type = block.getType();
+            if (isBed(type) || type == Material.RESPAWN_ANCHOR) {
+                Player player = event.getPlayer();
+
+                // Allow shift-right click for placement, prevent explosions otherwise
+                if (!player.isSneaking()) {
+                    event.setCancelled(true);
+                }
+            }
+        }
+    }
+    
     private boolean isFluidOrBubbleColumn(Block block) {
         Material type = block.getType();
         return type == Material.WATER || type == Material.LAVA || type == Material.BUBBLE_COLUMN;

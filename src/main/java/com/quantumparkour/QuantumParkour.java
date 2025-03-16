@@ -48,7 +48,7 @@ public final class QuantumParkour extends JavaPlugin {
                 SetPracCommand::new,
                 SetSpawnCommand::new,
                 SpawnCommand::new,
-                UnpracCommand::new,
+                UnpracCommand::new
                 //QwobitsCommand::new // Register the new command here
         );
         configManager.registerConfigs(QuantumConfig.values());
