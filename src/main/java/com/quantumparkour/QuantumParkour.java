@@ -10,6 +10,7 @@ import com.quantumparkour.config.ConfigManager;
 import com.quantumparkour.config.QuantumConfig;
 import com.quantumparkour.listener.BlockEventListener;
 import com.quantumparkour.listener.CheckpointItemListener;
+import com.quantumparkour.listener.PlayerCollisionListener;
 import com.quantumparkour.listener.PlayerLeaveListener;
 import com.quantumparkour.listener.PlayerRespawnListener;
 import com.quantumparkour.util.PlaceholderAPIWrapper;
@@ -46,8 +47,9 @@ public final class QuantumParkour extends JavaPlugin {
                 UnpracCommand::new
         );
         configManager.registerConfigs(QuantumConfig.values());
-        Bukkit.getPluginManager().registerEvents(new BlockEventListener(this), this);
         
+        Bukkit.getPluginManager().registerEvents(new BlockEventListener(this), this);
+        Bukkit.getPluginManager().registerEvents(new PlayerCollisionListener(), this);
     }
 
     @SafeVarargs

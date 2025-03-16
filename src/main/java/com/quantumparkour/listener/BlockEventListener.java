@@ -147,6 +147,9 @@ public class BlockEventListener implements Listener {
         if (interactedBlock.getType() == Material.BUBBLE_COLUMN) {
             event.setCancelled(true);
         }
+        if (interactedBlock.getType() == Material.DRAGON_EGG) {
+            event.setCancelled(true);
+        }
         for (int x = -1; x <= 1; x++) {
             for (int y = -1; y <= 1; y++) {
                 for (int z = -1; z <= 1; z++) {
@@ -170,6 +173,25 @@ public class BlockEventListener implements Listener {
     private boolean isFluidOrBubbleColumn(Block block) {
         Material type = block.getType();
         return type == Material.WATER || type == Material.LAVA || type == Material.BUBBLE_COLUMN;
+    }
+
+    private boolean isBed(Material type) {
+        return type == Material.RED_BED 
+        || type == Material.BLUE_BED 
+        || type == Material.GREEN_BED 
+        || type == Material.YELLOW_BED 
+        || type == Material.PURPLE_BED 
+        || type == Material.BLACK_BED 
+        || type == Material.WHITE_BED 
+        || type == Material.ORANGE_BED 
+        || type == Material.MAGENTA_BED 
+        || type == Material.LIGHT_BLUE_BED 
+        || type == Material.LIME_BED 
+        || type == Material.PINK_BED 
+        || type == Material.GRAY_BED 
+        || type == Material.LIGHT_GRAY_BED 
+        || type == Material.CYAN_BED 
+        || type == Material.BROWN_BED;
     }
 
     private boolean isProneableBlock(Material type) {
@@ -196,6 +218,26 @@ public class BlockEventListener implements Listener {
             case CAKE:
             case ANVIL:
             case DRAGON_EGG:
+            case LILY_PAD:
+            case CACTUS:
+            case OAK_HANGING_SIGN:
+            case SPRUCE_HANGING_SIGN:
+            case BIRCH_HANGING_SIGN:
+            case JUNGLE_HANGING_SIGN:
+            case ACACIA_HANGING_SIGN:
+            case DARK_OAK_HANGING_SIGN:
+            case CRIMSON_HANGING_SIGN:
+            case WARPED_HANGING_SIGN:
+            case PALE_OAK_HANGING_SIGN:
+            case OAK_WALL_SIGN:
+            case SPRUCE_WALL_SIGN:
+            case BIRCH_WALL_SIGN:
+            case JUNGLE_WALL_SIGN:
+            case ACACIA_WALL_SIGN:
+            case DARK_OAK_WALL_SIGN:
+            case CRIMSON_WALL_SIGN:
+            case WARPED_WALL_SIGN:
+            case PALE_OAK_WALL_SIGN:
                 return true;
             default:
                 return false;
