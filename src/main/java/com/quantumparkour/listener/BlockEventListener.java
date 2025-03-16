@@ -140,6 +140,9 @@ public class BlockEventListener implements Listener {
     public void onBlockInteract(PlayerInteractEvent event) {
         Block interactedBlock = event.getClickedBlock();
         if (interactedBlock == null) return;
+        if (event.getAction() == Action.RIGHT_CLICK_BLOCK && interactedBlock.getType() == Material.DRAGON_EGG && !event.getPlayer().isSneaking()) {
+            event.setCancelled(true);
+        }
         Material interactedType = interactedBlock.getType();
         if (isProneableBlock(interactedType)) {
             return;
@@ -147,9 +150,7 @@ public class BlockEventListener implements Listener {
         if (interactedBlock.getType() == Material.BUBBLE_COLUMN) {
             event.setCancelled(true);
         }
-        if (interactedBlock.getType() == Material.DRAGON_EGG) {
-            event.setCancelled(true);
-        }
+        
         for (int x = -1; x <= 1; x++) {
             for (int y = -1; y <= 1; y++) {
                 for (int z = -1; z <= 1; z++) {

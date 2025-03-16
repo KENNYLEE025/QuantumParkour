@@ -5,13 +5,10 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import com.quantumparkour.QuantumParkour;
 import com.quantumparkour.command.QuantumCommand;
 import com.quantumparkour.config.QuantumConfig;
-
-import java.util.List;
 
 public class SpawnCommand implements QuantumCommand {
     @Override
