@@ -67,21 +67,16 @@ public class CommandManager {
             return true;
         });
         pluginCommand.setTabCompleter((sender, command1, label, args) -> {
-            List<String> suggestions = command.getTabCompletions(sender, command1, label, args);
-            if (suggestions == null || args.length == 0) {
-                return Collections.emptyList();
-            }
-            return StringUtil.copyPartialMatches(args[args.length - 1], suggestions, new ArrayList<>());
+            return command.getTabCompletions(sender, command1, label, args);
         });
 
-        QuantumParkour.getPlugin().getServer().getCommandMap().register(QuantumParkour.getPlugin().getName(), pluginCommand);
+        Bukkit.getCommandMap().register(QuantumParkour.getPlugin().getName(), pluginCommand);
     }
 
     @SafeVarargs
     public final void registerCommands(Supplier<QuantumCommand>... suppliers) {
-        Arrays.stream(suppliers)
-                .map(Supplier::get)
-                .forEach(this::registerCommand);
+        for (Supplier<QuantumCommand> supplier : suppliers) {
+            registerCommand(supplier.get());
+        }
     }
-
 }
