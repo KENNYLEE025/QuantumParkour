@@ -6,12 +6,3 @@ authors: [ Diabet, Nova ]
 description: Practice feature for Minecraft Parkour. Utilizes commands to set their checkpoint to practice a jump or multiple jumps using red dye and diamond NBT tags. Supports Minecraft Java Edition 1.21 on Paper.
 
 softdepend: [PlaceholderAPI, AnimatedScoreboard]
-
-commands:
-  qwobits:
-    description: Manage Qwobits for players.
-    usage: /qwobits <balance/add/subtract/set> [player] [amount]
-    aliases: [balance, bal]
-  qdebug:
-    description: Debug the database and player information.
-    usage: /qdebug <player>

@@ -11,9 +11,7 @@ import com.quantumparkour.command.CommandManager;
 import com.quantumparkour.command.commands.*;
 import com.quantumparkour.config.ConfigManager;
 import com.quantumparkour.config.QuantumConfig;
-//import com.quantumparkour.todo.PlayerJoinListener;
-//import com.quantumparkour.todo.QDebugCommand;
-//import com.quantumparkour.todo.QuantumDatabase;
+import com.quantumparkour.database.QuantumDatabase;
 import com.quantumparkour.util.PlaceholderAPIWrapper;
 //import com.quantumparkour.manager.QwobitManager;
 
@@ -39,7 +37,7 @@ public final class QuantumParkour extends JavaPlugin {
         playerManager = new PlayerManager();
         pracManager = new PracManager();
         //qwobitManager = new QwobitManager();
-        //QuantumDatabase.initialize(); // Initialize the database
+        QuantumDatabase.initialize(); // Initialize the database
         registerEvents(
                 () -> new BlockEventListener(this),
                 CheckpointItemListener::new,
@@ -53,9 +51,9 @@ public final class QuantumParkour extends JavaPlugin {
                 SetPracCommand::new,
                 SetSpawnCommand::new,
                 SpawnCommand::new,
-                UnpracCommand::new
+                UnpracCommand::new,
                 //QwobitsCommand::new, // Register the new command here
-                //QDebugCommand::new // Register the QDebugCommand here
+                QDebugCommand::new // Register the QDebugCommand here
         );
         configManager.registerConfigs(QuantumConfig.values());
         Bukkit.getPluginManager().registerEvents(new BlockEventListener(this), this);
