@@ -18,14 +18,14 @@ public class ConfigManager {
     private final Map<String, Config> configs = new HashMap<>();
 
     public ConfigManager() {
-        Arrays.stream(QuantumConfig.values()).forEach(this::load);
+        Arrays.stream(QuantumConfigs.values()).forEach(this::load);
     }
 
-    public void registerConfigs(QuantumConfig... configs) {
+    public void registerConfigs(QuantumConfigs... configs) {
         List.of(configs).forEach(this::load);
     }
 
-    private void load(QuantumConfig configs) {
+    private void load(QuantumConfigs configs) {
         File file = new File(QuantumParkour.getPlugin().getDataFolder(), configs.getName() + ".yml");
         try {
 
@@ -65,7 +65,7 @@ public class ConfigManager {
         }
     }
 
-    public void saveConfig(QuantumConfig configs) {
+    public void saveConfig(QuantumConfigs configs) {
         if (this.configs.get(configs.getName()) == null) {
             Bukkit.getConsoleSender().sendRichMessage("<red>Cannot save unregistered config " + configs.getName() + ".yml");
             return;
@@ -81,14 +81,14 @@ public class ConfigManager {
         }
     }
 
-    public FileConfiguration getConfig(QuantumConfig configs) {
+    public FileConfiguration getConfig(QuantumConfigs configs) {
         if (this.configs.get(configs.getName()) == null) {
             Bukkit.getConsoleSender().sendRichMessage("<red>Cannot get unregistered config " + configs.getName() + ".yml");
         }
         return this.configs.get(configs.getName()).configuration;
     }
 
-    public void reloadConfig(QuantumConfig configs) {
+    public void reloadConfig(QuantumConfigs configs) {
         if (this.configs.get(configs.getName()) == null) {
             Bukkit.getConsoleSender().sendRichMessage("<red>Cannot reload unregistered config " + configs.getName() + ".yml");
             return;

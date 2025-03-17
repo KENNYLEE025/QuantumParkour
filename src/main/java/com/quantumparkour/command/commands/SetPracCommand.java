@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
 
 import com.quantumparkour.QuantumParkour;
 import com.quantumparkour.command.QuantumCommand;
-import com.quantumparkour.config.QuantumConfig;
+import com.quantumparkour.config.QuantumConfigs;
 import com.quantumparkour.util.PlaceholderAPIWrapper;
 
 public class SetPracCommand implements QuantumCommand {
@@ -34,10 +34,10 @@ public class SetPracCommand implements QuantumCommand {
             return;
         }
         if (!player.isOnGround()) {
-            player.sendRichMessage(PlaceholderAPIWrapper.setPlaceholders(player, QuantumParkour.getConfigManager().getConfig(QuantumConfig.MESSAGES).getString("must-be-on-ground")));
+            player.sendRichMessage(PlaceholderAPIWrapper.setPlaceholders(player, QuantumParkour.getConfigManager().getConfig(QuantumConfigs.MESSAGES).getString("must-be-on-ground")));
             return;
         }
         QuantumParkour.getPracManager().setCheckpointLocation(player, player.getLocation());
-        player.sendRichMessage(PlaceholderAPIWrapper.setPlaceholders(player, QuantumParkour.getConfigManager().getConfig(QuantumConfig.MESSAGES).getString("temp-prac-location-set")));
+        player.sendRichMessage(PlaceholderAPIWrapper.setPlaceholders(player, QuantumParkour.getConfigManager().getConfig(QuantumConfigs.MESSAGES).getString("temp-prac-location-set")));
     }
 }

@@ -8,7 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import com.quantumparkour.QuantumParkour;
 import com.quantumparkour.command.QuantumCommand;
-import com.quantumparkour.config.QuantumConfig;
+import com.quantumparkour.config.QuantumConfigs;
 
 public class SpawnCommand implements QuantumCommand {
     @Override
@@ -32,7 +32,7 @@ public class SpawnCommand implements QuantumCommand {
             sender.sendMessage("Only players can use this command.");
             return;
         }
-        Location location = QuantumParkour.getConfigManager().getConfig(QuantumConfig.SPAWN).getLocation("spawn");
+        Location location = QuantumParkour.getConfigManager().getConfig(QuantumConfigs.SPAWN).getLocation("spawn");
         if (location != null) {
             player.teleport(location);
             return;

@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import com.quantumparkour.QuantumParkour;
 import com.quantumparkour.command.QuantumCommand;
-import com.quantumparkour.config.QuantumConfig;
+import com.quantumparkour.config.QuantumConfigs;
 import com.quantumparkour.util.PlaceholderAPIWrapper;
 
 public class PracCommand implements QuantumCommand {
@@ -38,17 +38,17 @@ public class PracCommand implements QuantumCommand {
             return;
         }
         if (!player.isOnGround()) {
-            player.sendRichMessage(PlaceholderAPIWrapper.setPlaceholders(player, QuantumParkour.getConfigManager().getConfig(QuantumConfig.MESSAGES).getString("must-be-on-ground")));
+            player.sendRichMessage(PlaceholderAPIWrapper.setPlaceholders(player, QuantumParkour.getConfigManager().getConfig(QuantumConfigs.MESSAGES).getString("must-be-on-ground")));
             return;
         }
         Location pracLocation = QuantumParkour.getPracManager().getPracLocation(player);
         if (pracLocation != null) {
-            player.sendRichMessage(PlaceholderAPIWrapper.setPlaceholders(player, QuantumParkour.getConfigManager().getConfig(QuantumConfig.MESSAGES).getString("prac-already-enabled")));
+            player.sendRichMessage(PlaceholderAPIWrapper.setPlaceholders(player, QuantumParkour.getConfigManager().getConfig(QuantumConfigs.MESSAGES).getString("prac-already-enabled")));
             return;
         }
         QuantumParkour.getPracManager().setPracLocation(player, player.getLocation());
         QuantumParkour.getPracManager().setCheckpointLocation(player, player.getLocation()); // Ensure checkpoint is set
-        player.sendRichMessage(PlaceholderAPIWrapper.setPlaceholders(player, QuantumParkour.getConfigManager().getConfig(QuantumConfig.MESSAGES).getString("prac-enabled")));
+        player.sendRichMessage(PlaceholderAPIWrapper.setPlaceholders(player, QuantumParkour.getConfigManager().getConfig(QuantumConfigs.MESSAGES).getString("prac-enabled")));
 
         // Add items to player's inventory
         ItemStack checkpointItem = new ItemStack(Material.RED_DYE);
