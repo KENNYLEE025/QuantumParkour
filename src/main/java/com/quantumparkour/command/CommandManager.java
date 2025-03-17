@@ -10,7 +10,6 @@ import com.quantumparkour.QuantumParkour;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.function.Supplier;
@@ -67,7 +66,11 @@ public class CommandManager {
             return true;
         });
         pluginCommand.setTabCompleter((sender, command1, label, args) -> {
-            return command.getTabCompletions(sender, command1, label, args);
+            List<String> suggestions = command.getTabCompletions(sender, command1, label, args);
+            if (suggestions == null || args.length == 0) {
+                return Collections.emptyList();
+            }
+            return StringUtil.copyPartialMatches(args[args.length - 1], suggestions, new ArrayList<>());
         });
 
         Bukkit.getCommandMap().register(QuantumParkour.getPlugin().getName(), pluginCommand);
