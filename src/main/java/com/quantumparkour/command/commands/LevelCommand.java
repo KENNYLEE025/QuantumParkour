@@ -64,7 +64,7 @@ public class LevelCommand implements QuantumCommand {
                         .map(level -> " • <click:run_command:'/say hi'>" + level.getName() + "</click>")
                         .forEach(sender::sendRichMessage);
             }
-            case "modify" -> {
+            case "settings" -> {
                 System.out.println(5);
             }
             default -> sender.sendRichMessage("<red>" + this.getUsage());
@@ -74,12 +74,12 @@ public class LevelCommand implements QuantumCommand {
     @Override
     public List<String> getTabCompletions(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args.length == 1) {
-            return List.of("create", "delete", "info", "list", "modify");
+            return List.of("create", "delete", "info", "list", "settings");
         }
         if (args.length == 2) {
             if (args[0].equalsIgnoreCase("delete")
                     || args[0].equalsIgnoreCase("info")
-                    || args[0].equalsIgnoreCase("modify")) {
+                    || args[0].equalsIgnoreCase("settings")) {
                 return QuantumParkour.getLevelManager().getLevels()
                         .stream()
                         .map(Level::getName)
