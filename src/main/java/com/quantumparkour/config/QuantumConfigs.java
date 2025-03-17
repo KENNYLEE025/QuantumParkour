@@ -1,13 +1,14 @@
 package com.quantumparkour.config;
 
-public enum QuantumConfig {
+public enum QuantumConfigs {
+    LEVELS("levels", false),
     MESSAGES("messages", true),
     SPAWN("spawn", false);
 
     private final String name;
     private final boolean loadDefaults;
 
-    QuantumConfig(String name, boolean loadDefaults) {
+    QuantumConfigs(String name, boolean loadDefaults) {
         this.name = name;
         this.loadDefaults = loadDefaults;
     }

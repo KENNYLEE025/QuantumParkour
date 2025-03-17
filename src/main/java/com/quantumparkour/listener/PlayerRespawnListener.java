@@ -6,13 +6,13 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerRespawnEvent;
 
 import com.quantumparkour.QuantumParkour;
-import com.quantumparkour.config.QuantumConfig;
+import com.quantumparkour.config.QuantumConfigs;
 
 public class PlayerRespawnListener implements Listener {
 
     @EventHandler
     public void onPlayerRespawn(PlayerRespawnEvent event) {
-        Location location = QuantumParkour.getConfigManager().getConfig(QuantumConfig.SPAWN).getLocation("spawn");
+        Location location = QuantumParkour.getConfigManager().getConfig(QuantumConfigs.SPAWN).getLocation("spawn");
         if (location != null) {
             event.setRespawnLocation(location);
         }

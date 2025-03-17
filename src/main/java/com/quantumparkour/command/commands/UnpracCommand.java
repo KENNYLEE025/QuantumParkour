@@ -11,7 +11,7 @@ import org.jetbrains.annotations.NotNull;
 
 import com.quantumparkour.QuantumParkour;
 import com.quantumparkour.command.QuantumCommand;
-import com.quantumparkour.config.QuantumConfig;
+import com.quantumparkour.config.QuantumConfigs;
 import com.quantumparkour.util.PlaceholderAPIWrapper;
 
 public class UnpracCommand implements QuantumCommand {
@@ -39,7 +39,7 @@ public class UnpracCommand implements QuantumCommand {
         }
         Location pracLocation = QuantumParkour.getPracManager().getPracLocation(player);
         if (pracLocation == null) {
-            player.sendRichMessage(PlaceholderAPIWrapper.setPlaceholders(player, QuantumParkour.getConfigManager().getConfig(QuantumConfig.MESSAGES).getString("not-in-prac")));
+            player.sendRichMessage(PlaceholderAPIWrapper.setPlaceholders(player, QuantumParkour.getConfigManager().getConfig(QuantumConfigs.MESSAGES).getString("not-in-prac")));
             return;
         }
         player.teleport(pracLocation);
@@ -58,6 +58,6 @@ public class UnpracCommand implements QuantumCommand {
             }
         }
 
-        player.sendRichMessage(PlaceholderAPIWrapper.setPlaceholders(player, QuantumParkour.getConfigManager().getConfig(QuantumConfig.MESSAGES).getString("prac-disabled")));
+        player.sendRichMessage(PlaceholderAPIWrapper.setPlaceholders(player, QuantumParkour.getConfigManager().getConfig(QuantumConfigs.MESSAGES).getString("prac-disabled")));
     }
 }

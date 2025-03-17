@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 
 import com.quantumparkour.QuantumParkour;
 import com.quantumparkour.command.QuantumCommand;
-import com.quantumparkour.config.QuantumConfig;
+import com.quantumparkour.config.QuantumConfigs;
 
 import java.util.List;
 
@@ -86,8 +86,8 @@ public class SetSpawnCommand implements QuantumCommand {
             }
             location.setWorld(world);
         }
-        QuantumParkour.getConfigManager().getConfig(QuantumConfig.SPAWN).set("spawn", location);
-        QuantumParkour.getConfigManager().saveConfig(QuantumConfig.SPAWN);
+        QuantumParkour.getConfigManager().getConfig(QuantumConfigs.SPAWN).set("spawn", location);
+        QuantumParkour.getConfigManager().saveConfig(QuantumConfigs.SPAWN);
         sender.sendRichMessage("Spawn has been set to " + location.getX() + ", " + location.getY() + ", " + location.getZ() + " in: " + location.getWorld().getName());
     }
 
