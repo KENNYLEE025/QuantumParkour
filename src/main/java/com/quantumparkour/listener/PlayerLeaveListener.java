@@ -11,6 +11,8 @@ public class PlayerLeaveListener implements Listener {
 
     @EventHandler
     public void onPlayerLeave(PlayerQuitEvent event) {
+        QuantumParkour.getPlayerManager().remove(event.getPlayer());
+
         Location location = QuantumParkour.getPracManager().getPracLocation(event.getPlayer());
         if (location != null) {
             event.getPlayer().teleport(location);
