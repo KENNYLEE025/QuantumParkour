@@ -54,10 +54,12 @@ public final class QuantumParkour extends JavaPlugin {
                 CheckpointItemListener::new,
                 PlayerJoinListener::new,
                 PlayerLeaveListener::new,
-                PlayerRespawnListener::new
+                PlayerRespawnListener::new,
+                ServerTickEndListener::new
         );
         commandManager.registerCommands(
                 CheckpointCommand::new,
+                ConfirmCommand::new,
                 LevelCommand::new,
                 PracCommand::new,
                 SetPracCommand::new,

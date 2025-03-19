@@ -3,6 +3,7 @@ package com.quantumparkour.command.commands;
 import com.quantumparkour.QuantumParkour;
 import com.quantumparkour.command.QuantumCommand;
 import com.quantumparkour.level.Level;
+import com.quantumparkour.util.SafeConfirm;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.jetbrains.annotations.NotNull;
@@ -50,9 +51,10 @@ public class LevelCommand implements QuantumCommand {
                     sender.sendRichMessage("<red>'" + args[1].toLowerCase() + "' is not a level.");
                     return;
                 }
-                String code = generateCode();
                 sender.sendRichMessage("Are you sure you want to delete level '" + level.getName() + "'?");
-                sender.sendRichMessage("Confirm by typing: /confirm " + code);
+                SafeConfirm.create(sender, 200, sender1 -> {
+                    sender1.sendRichMessage("Deleted level '" + args[1].toLowerCase() + "'.");
+                });
             }
             case "info" -> {
                 System.out.println(3);
@@ -87,16 +89,5 @@ public class LevelCommand implements QuantumCommand {
             }
         }
         return null;
-    }
-
-    private String generateCode() {
-        String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-        SecureRandom random = new SecureRandom();
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < 7; i++) {
-            int randomIndex = random.nextInt(characters.length());
-            builder.append(characters.charAt(randomIndex));
-        }
-        return builder.toString();
     }
 }
