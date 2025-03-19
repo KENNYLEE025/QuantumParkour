@@ -45,7 +45,7 @@ public class SetSpawnCommand implements QuantumCommand {
         }
         Location location = new Location(player.getWorld(), player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
         if (args.length > 0 && args.length < 3 || args.length == 4) {
-            sender.sendRichMessage("<red>Too few arguments.");
+            sender.sendRichMessage("<red>Not enough arguments.");
             return;
         }
         if (args.length != 0) {

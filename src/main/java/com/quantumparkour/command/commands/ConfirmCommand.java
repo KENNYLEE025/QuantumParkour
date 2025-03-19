@@ -28,7 +28,7 @@ public class ConfirmCommand implements QuantumCommand {
     @Override
     public void execute(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         if (args.length < 1) {
-            sender.sendRichMessage("<red>Too few arguments.");
+            sender.sendRichMessage("<red>Not enough arguments.");
             return;
         }
         if (args.length == 1) {

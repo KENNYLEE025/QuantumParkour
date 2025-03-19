@@ -25,6 +25,12 @@ public class LevelManager {
         QuantumParkour.getConfigManager().saveConfig(QuantumConfigs.LEVELS);
     }
 
+    public void deleteLevel(Level level) {
+        this.levels.remove(level);
+        QuantumParkour.getConfigManager().getConfig(QuantumConfigs.LEVELS).set(level.getName(), null);
+        QuantumParkour.getConfigManager().saveConfig(QuantumConfigs.LEVELS);
+    }
+
     public void loadLevels(QuantumConfigs config) {
         QuantumParkour.getConfigManager().getConfig(config).getKeys(true).forEach(key -> {
             Level level = (Level) QuantumParkour.getConfigManager().getConfig(config).get(key);
