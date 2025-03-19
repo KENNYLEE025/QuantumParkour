@@ -16,6 +16,7 @@ public class Level implements ConfigurationSerializable {
     private boolean announceCompletion = false;
     private boolean noSprint = false;
     private boolean onlySprint = false;
+    private boolean practiceable = false;
     private List<PotionEffect> potionEffects = new ArrayList<>();
 
     public Level(String name) {
@@ -96,6 +97,14 @@ public class Level implements ConfigurationSerializable {
         this.potionEffects = potionEffects;
     }
 
+    public void setPracticeable(boolean practiceable) {
+        this.practiceable = practiceable;
+    }
+
+    public boolean isPracticeable() {
+        return this.practiceable;
+    }
+
     @Override
     public @NotNull Map<String, Object> serialize() {
         Map<String, Object> data = new LinkedHashMap<>();
@@ -107,6 +116,7 @@ public class Level implements ConfigurationSerializable {
         addIf(data, "no-sprint", noSprint, noSprint);
         addIf(data, "only-sprint", onlySprint, onlySprint);
         addIf(data, "potion-effects", potionEffects, potionEffects != null && !potionEffects.isEmpty());
+        addIf(data, "practiceable", practiceable, practiceable);
         return data;
     }
 
@@ -128,6 +138,7 @@ public class Level implements ConfigurationSerializable {
                 ", noSprint=" + noSprint +
                 ", onlySprint=" + onlySprint +
                 ", potionEffects=" + potionEffects +
+                ", practiceable=" + practiceable +
                 '}';
     }
 
@@ -166,7 +177,9 @@ public class Level implements ConfigurationSerializable {
         Optional.ofNullable(args.get("potion-effects"))
                 .map(effects -> (List<PotionEffect>) effects)
                 .ifPresent(level::setPotionEffects);
-
+        Optional.ofNullable(args.get("practiceable"))
+                .map(practiceable -> (boolean) practiceable)
+                .ifPresent(level::setPracticeable);
         return level;
     }
 }
