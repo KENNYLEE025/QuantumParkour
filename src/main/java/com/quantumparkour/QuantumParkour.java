@@ -1,9 +1,11 @@
 package com.quantumparkour;
 
+import com.quantumparkour.level.Level;
 import com.quantumparkour.level.LevelManager;
 import com.quantumparkour.listener.*;
 import com.quantumparkour.player.PlayerManager;
 import org.bukkit.Bukkit;
+import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -28,6 +30,11 @@ public final class QuantumParkour extends JavaPlugin {
     private static PlayerManager playerManager;
     private static PracManager pracManager;
     //private static QwobitManager qwobitManager;
+
+    @Override
+    public void onLoad() {
+        ConfigurationSerialization.registerClass(Level.class);
+    }
 
     @Override
     public void onEnable() {
@@ -62,7 +69,6 @@ public final class QuantumParkour extends JavaPlugin {
         );
         configManager.registerConfigs(QuantumConfigs.values());
         levelManager.loadLevels(QuantumConfigs.LEVELS);
-        Bukkit.getPluginManager().registerEvents(new BlockEventListener(this), this);
     }
 
     @SafeVarargs
