@@ -99,7 +99,11 @@ public class LevelCommand implements QuantumCommand {
             }
         }
         if (pageNumber > pageAmount) {
-            sender.sendRichMessage("<red>Page '" + args[1] + "' does not exist.");
+            if (args.length == 1) {
+                sender.sendRichMessage("<red>There are no levels.");
+            } else {
+                sender.sendRichMessage("<red>Page '" + args[1] + "' does not exist.");
+            }
             return;
         }
         int start = (pageNumber - 1) * 10;
