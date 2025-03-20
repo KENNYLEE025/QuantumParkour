@@ -6,6 +6,7 @@ import org.bukkit.potion.PotionEffect;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 public class Level implements ConfigurationSerializable {
     private String name;
@@ -14,8 +15,7 @@ public class Level implements ConfigurationSerializable {
     private Location startLocation;
     private int maxCompletions = -1;
     private boolean announceCompletion = false;
-    private boolean noSprint = false;
-    private boolean onlySprint = false;
+    private LevelType levelType = LevelType.DEFAULT;
     private boolean practiceable = false;
     private List<PotionEffect> potionEffects = new ArrayList<>();
 
@@ -73,20 +73,20 @@ public class Level implements ConfigurationSerializable {
         this.announceCompletion = announceCompletion;
     }
 
-    public boolean isNoSprint() {
-        return this.noSprint;
+    public LevelType getLevelType() {
+        return this.levelType;
     }
 
-    public void setNoSprint(boolean noSprint) {
-        this.noSprint = noSprint;
+    public void setLevelType(LevelType levelType) {
+        this.levelType = levelType;
     }
 
-    public boolean isOnlySprint() {
-        return this.onlySprint;
+    public boolean isPracticeable() {
+        return this.practiceable;
     }
 
-    public void setOnlySprint(boolean onlySprint) {
-        this.onlySprint = onlySprint;
+    public void setPracticeable(boolean practiceable) {
+        this.practiceable = practiceable;
     }
 
     public List<PotionEffect> getPotionEffects() {
@@ -97,14 +97,6 @@ public class Level implements ConfigurationSerializable {
         this.potionEffects = potionEffects;
     }
 
-    public void setPracticeable(boolean practiceable) {
-        this.practiceable = practiceable;
-    }
-
-    public boolean isPracticeable() {
-        return this.practiceable;
-    }
-
     @Override
     public @NotNull Map<String, Object> serialize() {
         Map<String, Object> data = new LinkedHashMap<>();
@@ -113,10 +105,9 @@ public class Level implements ConfigurationSerializable {
         addIf(data, "start-location", startLocation, startLocation != null);
         addIf(data, "max-completions", maxCompletions, maxCompletions > -1);
         addIf(data, "announce-completion", announceCompletion, announceCompletion);
-        addIf(data, "no-sprint", noSprint, noSprint);
-        addIf(data, "only-sprint", onlySprint, onlySprint);
-        addIf(data, "potion-effects", potionEffects, potionEffects != null && !potionEffects.isEmpty());
+        addIf(data, "level-type", levelType.name(), true);
         addIf(data, "practiceable", practiceable, practiceable);
+        addIf(data, "potion-effects", potionEffects, potionEffects != null && !potionEffects.isEmpty());
         return data;
     }
 
@@ -135,10 +126,9 @@ public class Level implements ConfigurationSerializable {
                 ", startLocation=" + startLocation +
                 ", maxCompletions=" + maxCompletions +
                 ", announceCompletion=" + announceCompletion +
-                ", noSprint=" + noSprint +
-                ", onlySprint=" + onlySprint +
-                ", potionEffects=" + potionEffects +
+                ", levelType=" + levelType +
                 ", practiceable=" + practiceable +
+                ", potionEffects=" + potionEffects +
                 '}';
     }
 
@@ -166,20 +156,20 @@ public class Level implements ConfigurationSerializable {
                 .map(announce -> (boolean) announce)
                 .ifPresent(level::setAnnounceCompletion);
 
-        Optional.ofNullable(args.get("no-sprint"))
-                .map(noSprint -> (boolean) noSprint)
-                .ifPresent(level::setNoSprint);
+        Optional.ofNullable(args.get("level-type"))
+                .flatMap(type -> Stream.of(LevelType.values())
+                        .filter(levelType -> levelType.name().equalsIgnoreCase((String) type))
+                        .findFirst())
+                .ifPresent(level::setLevelType);
 
-        Optional.ofNullable(args.get("only-sprint"))
-                .map(onlySprint -> (boolean) onlySprint)
-                .ifPresent(level::setOnlySprint);
+        Optional.ofNullable(args.get("practiceable"))
+                .map(practiceable -> (boolean) practiceable)
+                .ifPresent(level::setPracticeable);
 
         Optional.ofNullable(args.get("potion-effects"))
                 .map(effects -> (List<PotionEffect>) effects)
                 .ifPresent(level::setPotionEffects);
-        Optional.ofNullable(args.get("practiceable"))
-                .map(practiceable -> (boolean) practiceable)
-                .ifPresent(level::setPracticeable);
+
         return level;
     }
 }
