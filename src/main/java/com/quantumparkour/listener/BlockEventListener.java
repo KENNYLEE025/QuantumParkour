@@ -44,21 +44,14 @@ public class BlockEventListener implements Listener {
             event.setCancelled(true);
             return;
         }
-        for (int x = -1; x <= 1; x++) {
-            for (int y = -1; y <= 1; y++) {
-                for (int z = -1; z <= 1; z++) {
-                    if (x == 0 && y == 0 && z == 0) continue;
-                    Block adjacentBlock = block.getRelative(x, y, z);
-                    Material adjacentType = adjacentBlock.getType();
-                    if (isProneableBlock(adjacentType) || isCoralBlock(adjacentType) || isFluidOrBubbleColumn(adjacentBlock)) {
-                        event.setCancelled(true);
-                        return;
-                    }
-                }
-            }
-        }
-    }
 
+        forEachAdjacentBlock(block, adjacentBlock -> {
+            Material adjacentType = adjacentBlock.getType();
+            if (isProneableBlock(adjacentType) || isCoralBlock(adjacentType) || isFluidOrBubbleColumn(adjacentBlock)) {
+                event.setCancelled(true);
+            }
+        });
+    }
     @EventHandler
     public void onBlockFromTo(BlockFromToEvent event) {
         Block source = event.getBlock();
@@ -80,26 +73,24 @@ public class BlockEventListener implements Listener {
     public void onBlockPlace(BlockPlaceEvent event) {
         Block placedBlock = event.getBlock();
         Material placedType = placedBlock.getType();
+    
         if (isProneableBlock(placedType)) {
             return;
         }
         if (placedBlock.getType() == Material.BUBBLE_COLUMN) {
             event.setCancelled(true);
         }
-        for (int x = -1; x <= 1; x++) {
-            for (int y = -1; y <= 1; y++) {
-                for (int z = -1; z <= 1; z++) {
-                    Block nearby = placedBlock.getRelative(x, y, z);
-                    if (isProneableBlock(nearby.getType()) 
-                    || nearby.getType() == Material.BUBBLE_COLUMN 
-                    || nearby.getType() == Material.WATER 
-                    || nearby.getType() == Material.LAVA) { 
-                        savedBlocks.put(nearby, nearby.getBlockData());
-                        nearby.setType(Material.AIR, false);
-                    }
-                }
+    
+        forEachAdjacentBlock(placedBlock, nearby -> {
+            if (isProneableBlock(nearby.getType()) 
+                || nearby.getType() == Material.BUBBLE_COLUMN 
+                || nearby.getType() == Material.WATER 
+                || nearby.getType() == Material.LAVA) {
+                savedBlocks.put(nearby, nearby.getBlockData());
+                nearby.setType(Material.AIR, false);
             }
-        }
+        });
+    
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -109,27 +100,25 @@ public class BlockEventListener implements Listener {
         }.runTaskLater(plugin, 1L);
     }
 
-    @EventHandler
+   @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
         Block brokenBlock = event.getBlock();
         Material brokenType = brokenBlock.getType();
+
         if (isProneableBlock(brokenType)) {
             return;
         }
         if (brokenBlock.getType() == Material.BUBBLE_COLUMN) {
             event.setCancelled(true);
         }
-        for (int x = -1; x <= 1; x++) {
-            for (int y = -1; y <= 1; y++) {
-                for (int z = -1; z <= 1; z++) {
-                    Block nearby = brokenBlock.getRelative(x, y, z);
-                    if (isProneableBlock(nearby.getType())) {
-                        savedBlocks.put(nearby, nearby.getBlockData());
-                        nearby.setType(Material.AIR, false);
-                    }
-                }
+
+        forEachAdjacentBlock(brokenBlock, nearby -> {
+            if (isProneableBlock(nearby.getType())) {
+                savedBlocks.put(nearby, nearby.getBlockData());
+                nearby.setType(Material.AIR, false);
             }
-        }
+        });
+
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -143,9 +132,11 @@ public class BlockEventListener implements Listener {
     public void onBlockInteract(PlayerInteractEvent event) {
         Block interactedBlock = event.getClickedBlock();
         if (interactedBlock == null) return;
+    
         if (event.getAction() == Action.RIGHT_CLICK_BLOCK && interactedBlock.getType() == Material.DRAGON_EGG && !event.getPlayer().isSneaking()) {
             event.setCancelled(true);
         }
+    
         Material interactedType = interactedBlock.getType();
         if (isProneableBlock(interactedType)) {
             return;
@@ -153,18 +144,14 @@ public class BlockEventListener implements Listener {
         if (interactedBlock.getType() == Material.BUBBLE_COLUMN) {
             event.setCancelled(true);
         }
-        
-        for (int x = -1; x <= 1; x++) {
-            for (int y = -1; y <= 1; y++) {
-                for (int z = -1; z <= 1; z++) {
-                    Block nearby = interactedBlock.getRelative(x, y, z);
-                    if (isProneableBlock(nearby.getType())) {
-                        savedBlocks.put(nearby, nearby.getBlockData());
-                        nearby.setType(Material.AIR, false);
-                    }
-                }
+    
+        forEachAdjacentBlock(interactedBlock, nearby -> {
+            if (isProneableBlock(nearby.getType())) {
+                savedBlocks.put(nearby, nearby.getBlockData());
+                nearby.setType(Material.AIR, false);
             }
-        }
+        });
+    
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -173,7 +160,7 @@ public class BlockEventListener implements Listener {
             }
         }.runTaskLater(plugin, 1L);
     }
-
+    
     @EventHandler
     public void onEntityExplode(EntityExplodeEvent event) {
         EntityType entityType = event.getEntityType();
@@ -207,7 +194,19 @@ public class BlockEventListener implements Listener {
             }
         }
     }
-    
+
+    private void forEachAdjacentBlock(Block block, java.util.function.Consumer<Block> action) {
+        for (int x = -1; x <= 1; x++) {
+            for (int y = -1; y <= 1; y++) {
+                for (int z = -1; z <= 1; z++) {
+                    if (x == 0 && y == 0 && z == 0) continue; // Skip the block itself
+                    Block adjacentBlock = block.getRelative(x, y, z);
+                    action.accept(adjacentBlock);
+                }
+            }
+        }
+    }
+
     private boolean isFluidOrBubbleColumn(Block block) {
         Material type = block.getType();
         return type == Material.WATER || type == Material.LAVA || type == Material.BUBBLE_COLUMN;
@@ -276,6 +275,9 @@ public class BlockEventListener implements Listener {
             case CRIMSON_WALL_SIGN:
             case WARPED_WALL_SIGN:
             case PALE_OAK_WALL_SIGN:
+            case CHERRY_SIGN:
+            case CHERRY_WALL_SIGN:
+            case CHERRY_HANGING_SIGN:
                 return true;
             default:
                 return false;
