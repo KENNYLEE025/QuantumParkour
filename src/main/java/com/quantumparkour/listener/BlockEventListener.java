@@ -1,11 +1,18 @@
 package com.quantumparkour.listener;
 
+import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
 
 import org.bukkit.Material;
+import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
+import org.bukkit.block.BlockState;
+import org.bukkit.block.Sign;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Waterlogged;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -20,6 +27,9 @@ public class BlockEventListener implements Listener {
 
     private final JavaPlugin plugin;
     private final Map<Block, BlockData> savedBlocks = new WeakHashMap<>();
+    //private final Map<Block, String[]> signTextCache = new WeakHashMap<>();
+    //private final Map<Location, String[]> signCache = new HashMap<>();
+
 
     public BlockEventListener(JavaPlugin plugin) {
         this.plugin = plugin;
@@ -34,28 +44,15 @@ public class BlockEventListener implements Listener {
     }
 
     @EventHandler
-    public void onBlockPhysics(BlockPhysicsEvent event) {
-        Block block = event.getBlock();
-        Material type = block.getType();
+    public void onBlockFromTo(BlockFromToEvent event) {
+        Block source = event.getBlock();
+        Block destination = event.getToBlock();
 
-        if (isRedstoneComponent(type)) return;
-
-        if (isFluidOrBubbleColumn(block) || isProneableBlock(type) || isCoralBlock(type)) {
+        if (isWaterlogged(source)) {
             event.setCancelled(true);
             return;
         }
 
-        forEachAdjacentBlock(block, adjacentBlock -> {
-            Material adjacentType = adjacentBlock.getType();
-            if (isProneableBlock(adjacentType) || isCoralBlock(adjacentType) || isFluidOrBubbleColumn(adjacentBlock)) {
-                event.setCancelled(true);
-            }
-        });
-    }
-    @EventHandler
-    public void onBlockFromTo(BlockFromToEvent event) {
-        Block source = event.getBlock();
-        Block destination = event.getToBlock();
         if (isFluidOrBubbleColumn(source) || isFluidOrBubbleColumn(destination)) {
             event.setCancelled(true);
         }
@@ -69,56 +66,40 @@ public class BlockEventListener implements Listener {
         }
     }
 
-    @EventHandler
-    public void onBlockPlace(BlockPlaceEvent event) {
-        Block placedBlock = event.getBlock();
-        Material placedType = placedBlock.getType();
-    
-        if (isProneableBlock(placedType)) {
-            return;
-        }
-        if (placedBlock.getType() == Material.BUBBLE_COLUMN) {
-            event.setCancelled(true);
-        }
-    
-        forEachAdjacentBlock(placedBlock, nearby -> {
-            if (isProneableBlock(nearby.getType()) 
-                || nearby.getType() == Material.BUBBLE_COLUMN 
-                || nearby.getType() == Material.WATER 
-                || nearby.getType() == Material.LAVA) {
-                savedBlocks.put(nearby, nearby.getBlockData());
-                nearby.setType(Material.AIR, false);
-            }
-        });
-    
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                savedBlocks.forEach((block, blockData) -> block.setBlockData(blockData, false));
-                savedBlocks.clear();
-            }
-        }.runTaskLater(plugin, 1L);
-    }
+    // To-Do: Implement the following event handlers
+    // - BlockBreakEvent
+    // - BlockPhysicsEvent
+    // - SignChangeEvent
+    // - BlockPlaceEvent
 
-   @EventHandler
+    @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
         Block brokenBlock = event.getBlock();
         Material brokenType = brokenBlock.getType();
 
+        
+        /* // Handle adjacent signs
+        forEachAdjacentBlock(brokenBlock, adjacentBlock -> {
+            if (isSign(adjacentBlock.getType())) {
+                restoreSignText(adjacentBlock);
+            }
+        }); */
+    
+        // Existing logic for proneable blocks
         if (isProneableBlock(brokenType)) {
             return;
         }
         if (brokenBlock.getType() == Material.BUBBLE_COLUMN) {
             event.setCancelled(true);
         }
-
+    
         forEachAdjacentBlock(brokenBlock, nearby -> {
             if (isProneableBlock(nearby.getType())) {
                 savedBlocks.put(nearby, nearby.getBlockData());
                 nearby.setType(Material.AIR, false);
             }
         });
-
+    
         new BukkitRunnable() {
             @Override
             public void run() {
@@ -127,6 +108,156 @@ public class BlockEventListener implements Listener {
             }
         }.runTaskLater(plugin, 1L);
     }
+
+    @EventHandler
+    public void onBlockPlace(BlockPlaceEvent event) {
+        Block placedBlock = event.getBlock();
+        Material placedType = placedBlock.getType();
+        Bukkit.getLogger().info("[DEBUG] BlockPlaceEvent: " + placedBlock.getType());
+
+        // Check if the block is a sign type (could be any kind of sign: regular, wall sign, etc.)
+        /* if (isSign(placedBlock.getType())) {
+            Bukkit.getLogger().info("[DEBUG] Sign placed at: " + placedBlock.getLocation());
+            // Do not cache the text here; wait for SignChangeEvent
+        } */
+
+        // Existing logic for proneable blocks
+        if (isProneableBlock(placedType)) {
+            return; // Skip further handling if the placed block is proneable
+        }
+
+        if (placedBlock.getType() == Material.BUBBLE_COLUMN) {
+            event.setCancelled(true); // Cancel event for Bubble Column
+        }
+
+        // Handle adjacent blocks
+        forEachAdjacentBlock(placedBlock, nearby -> {
+            /* if (isSign(nearby.getType())) {
+                Bukkit.getLogger().info("[DEBUG] Restoring text for adjacent sign at: " + nearby.getLocation());
+                restoreSignText(nearby); // Restore the cached text for adjacent signs
+            } else  */
+             if (isProneableBlock(nearby.getType())
+                    || nearby.getType() == Material.BUBBLE_COLUMN 
+                    || nearby.getType() == Material.WATER 
+                    || nearby.getType() == Material.LAVA) {
+                savedBlocks.put(nearby, nearby.getBlockData());
+                nearby.setType(Material.AIR, false); // Remove the proneable block
+            }
+        });
+
+        // Restore the saved blocks after the event
+        new BukkitRunnable() {
+            @Override
+            public void run() {
+                savedBlocks.forEach((block, blockData) -> block.setBlockData(blockData, false));
+                savedBlocks.clear();
+            }
+        }.runTaskLater(plugin, 1L);
+    }
+
+    @EventHandler
+    public void onBlockPhysics(BlockPhysicsEvent event) {
+        Block block = event.getBlock();
+        Material type = block.getType();
+
+        if (isWaterlogged(block)) {
+            event.setCancelled(true);
+            return;
+        }
+
+        // Step 1: Allow Signs to Restore Their Text Separately
+        /* if (isSign(type)) {
+            event.setCancelled(true); // Prevent sign updates
+            restoreSignText(block);
+            return;
+        } */
+
+        // Step 2: Cancel Physics Updates for Proneable Blocks
+        if (isProneableBlock(type) || isFluidOrBubbleColumn(block) || isCoralBlock(type)) {
+            event.setCancelled(true);
+            return;
+        }
+
+        // Step 3: Check Adjacent Blocks for Proneable Block Interactions
+        forEachAdjacentBlock(block, adjacentBlock -> {
+            Material adjacentType = adjacentBlock.getType();
+            if (isProneableBlock(adjacentType) || isCoralBlock(adjacentType) || isFluidOrBubbleColumn(adjacentBlock)) {
+                event.setCancelled(true);
+            }
+        });
+    }
+
+    /* @EventHandler
+    public void onSignChange(SignChangeEvent event) {
+        Block block = event.getBlock();
+
+        // Cache the sign's text when it is changed
+        if (isSign(block.getType())) {
+            String[] lines = event.getLines();
+            signTextCache.put(block, lines.clone()); // Cache the text
+            cacheSignText(block); // Update the cache
+
+            Bukkit.getLogger().info("[DEBUG] Sign text cached at: " + block.getLocation());
+            for (int i = 0; i < lines.length; i++) {
+                Bukkit.getLogger().info("    Line " + i + ": " + lines[i]);
+            }
+        }
+    } */
+
+    /* private void restoreSignText(Block signBlock) {
+        if (!(signBlock.getState() instanceof Sign)) return;
+
+        Sign sign = (Sign) signBlock.getState();
+        Location loc = signBlock.getLocation();
+
+        // Debug: Check if the cache contains the sign
+        if (!signCache.containsKey(loc)) {
+            Bukkit.getLogger().info("[DEBUG] No cached text found for sign at: " + loc);
+            return;
+        }
+
+        Bukkit.getLogger().info("[DEBUG] Restoring text for sign at: " + loc);
+        String[] cachedLines = signCache.get(loc);
+
+        for (int i = 0; i < cachedLines.length; i++) {
+            sign.setLine(i, cachedLines[i]);
+            Bukkit.getLogger().info("[DEBUG]     Restored Line " + i + ": " + cachedLines[i]);
+        }
+
+        sign.update();
+    } */
+    
+    /* private void cacheSignText(Block signBlock) {
+        if (!(signBlock.getState() instanceof Sign)) return;
+    
+        Sign sign = (Sign) signBlock.getState();
+        Location loc = signBlock.getLocation();
+    
+        // Debug: Check if the cache already had this sign
+        if (signCache.containsKey(loc)) {
+            Bukkit.getLogger().info("[DEBUG] Updating cached text for sign at: " + loc);
+        } else {
+            Bukkit.getLogger().info("[DEBUG] Sign text cached at: " + loc);
+        }
+    
+        // Store the sign text
+        String[] lines = sign.getLines();
+        signCache.put(loc, lines);
+    
+        for (int i = 0; i < lines.length; i++) {
+            Bukkit.getLogger().info("[DEBUG]     Line " + i + ": " + lines[i]);
+        }
+    } */
+
+    // End of To-Do
+
+    private boolean isWaterlogged(Block block) {
+    BlockData blockData = block.getBlockData();
+    if (blockData instanceof Waterlogged) {
+        return ((Waterlogged) blockData).isWaterlogged();
+    }
+    return false;
+}
 
     @EventHandler
     public void onBlockInteract(PlayerInteractEvent event) {
@@ -207,6 +338,7 @@ public class BlockEventListener implements Listener {
         }
     }
 
+
     private boolean isFluidOrBubbleColumn(Block block) {
         Material type = block.getType();
         return type == Material.WATER || type == Material.LAVA || type == Material.BUBBLE_COLUMN;
@@ -257,7 +389,23 @@ public class BlockEventListener implements Listener {
             case DRAGON_EGG:
             case LILY_PAD:
             case CACTUS:
-            case OAK_HANGING_SIGN:
+            case WHITE_CARPET:
+            case ORANGE_CARPET:
+            case MAGENTA_CARPET:
+            case LIGHT_BLUE_CARPET:
+            case YELLOW_CARPET:
+            case LIME_CARPET:
+            case PINK_CARPET:
+            case GRAY_CARPET:
+            case LIGHT_GRAY_CARPET:
+            case CYAN_CARPET:
+            case PURPLE_CARPET:
+            case BLUE_CARPET:
+            case BROWN_CARPET:
+            case GREEN_CARPET:
+            case RED_CARPET:
+            case BLACK_CARPET:
+            /* case OAK_HANGING_SIGN:
             case SPRUCE_HANGING_SIGN:
             case BIRCH_HANGING_SIGN:
             case JUNGLE_HANGING_SIGN:
@@ -277,7 +425,7 @@ public class BlockEventListener implements Listener {
             case PALE_OAK_WALL_SIGN:
             case CHERRY_SIGN:
             case CHERRY_WALL_SIGN:
-            case CHERRY_HANGING_SIGN:
+            case CHERRY_HANGING_SIGN: */
                 return true;
             default:
                 return false;
@@ -345,4 +493,35 @@ public class BlockEventListener implements Listener {
                 return false;
         }
     }
+
+    /* private boolean isSign(Material type)
+    {
+        switch (type) {
+            case OAK_SIGN:
+            case SPRUCE_SIGN:
+            case BIRCH_SIGN:
+            case JUNGLE_SIGN:
+            case ACACIA_SIGN:
+            case DARK_OAK_SIGN:
+            case CRIMSON_SIGN:
+            case WARPED_SIGN:
+            case PALE_OAK_SIGN:
+            case OAK_WALL_SIGN:
+            case SPRUCE_WALL_SIGN:
+            case BIRCH_WALL_SIGN:
+            case JUNGLE_WALL_SIGN:
+            case ACACIA_WALL_SIGN:
+            case DARK_OAK_WALL_SIGN:
+            case CRIMSON_WALL_SIGN:
+            case WARPED_WALL_SIGN:
+            case PALE_OAK_WALL_SIGN:
+            case CHERRY_SIGN:
+            case CHERRY_WALL_SIGN:
+            case CHERRY_HANGING_SIGN:
+                return true;
+            default:
+                return false;
+        }
+    }
+        */
 }
