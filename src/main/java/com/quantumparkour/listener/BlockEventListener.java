@@ -159,32 +159,83 @@ public class BlockEventListener implements Listener {
     public void onBlockPhysics(BlockPhysicsEvent event) {
         Block block = event.getBlock();
         Material type = block.getType();
-
+    
         if (isWaterlogged(block)) {
             event.setCancelled(true);
             return;
         }
-
+    
         // Step 1: Allow Signs to Restore Their Text Separately
         /* if (isSign(type)) {
             event.setCancelled(true); // Prevent sign updates
             restoreSignText(block);
             return;
         } */
-
-        // Step 2: Cancel Physics Updates for Proneable Blocks
-        if (isProneableBlock(type) || isFluidOrBubbleColumn(block) || isCoralBlock(type)) {
-            event.setCancelled(true);
+    
+        // Allow sticky pistons to push carpets, but cancel if a regular piston is nearby
+        if (isCarpet(type)) {
+            boolean hasStickyPiston = false;
+            boolean hasRegularPiston = false;
+    
+            for (BlockFace face : BlockFace.values()) {
+                Block adjacentBlock = block.getRelative(face);
+                Material adjacentType = adjacentBlock.getType();
+    
+                if (adjacentType == Material.STICKY_PISTON) {
+                    hasStickyPiston = true;
+                } else if (adjacentType == Material.PISTON) {
+                    hasRegularPiston = true;
+                }
+            }
+    
+            // If a regular piston is adjacent, cancel the event
+            if (hasRegularPiston) {
+                event.setCancelled(true);
+                return;
+            }
+    
+            // If there's a sticky piston nearby, allow the physics update
+            if (hasStickyPiston) {
+                return;
+            }
+        }
+    
+        if (isFluidOrBubbleColumn(block) || isCoralBlock(type)) {
+            event.setCancelled(true); // Cancel physics updates for fluids and coral blocks
             return;
         }
-
+    
         // Step 3: Check Adjacent Blocks for Proneable Block Interactions
         forEachAdjacentBlock(block, adjacentBlock -> {
             Material adjacentType = adjacentBlock.getType();
-            if (isProneableBlock(adjacentType) || isCoralBlock(adjacentType) || isFluidOrBubbleColumn(adjacentBlock)) {
+            if ((isProneableBlock(adjacentType) && !isCarpet(adjacentType)) || isCoralBlock(adjacentType) || isFluidOrBubbleColumn(adjacentBlock)) {
                 event.setCancelled(true);
             }
         });
+    }
+    
+    @EventHandler
+    public void onPistonExtend(BlockPistonExtendEvent event) {
+        if (isRegularPiston(event.getBlock())) {
+            for (Block block : event.getBlocks()) {
+                if (isCarpet(block.getType())) {
+                    event.setCancelled(true); // Prevent regular pistons from pushing carpets
+                    return;
+                }
+            }
+        }
+    }
+
+    @EventHandler
+    public void onPistonRetract(BlockPistonRetractEvent event) {
+        if (isRegularPiston(event.getBlock())) {
+            for (Block block : event.getBlocks()) {
+                if (isCarpet(block.getType())) {
+                    event.setCancelled(true); // Prevent regular pistons from pulling carpets
+                    return;
+                }
+            }
+        }
     }
 
     /* @EventHandler
@@ -251,13 +302,9 @@ public class BlockEventListener implements Listener {
 
     // End of To-Do
 
-    private boolean isWaterlogged(Block block) {
-    BlockData blockData = block.getBlockData();
-    if (blockData instanceof Waterlogged) {
-        return ((Waterlogged) blockData).isWaterlogged();
-    }
-    return false;
-}
+
+    
+    
 
     @EventHandler
     public void onBlockInteract(PlayerInteractEvent event) {
@@ -324,6 +371,18 @@ public class BlockEventListener implements Listener {
                 }
             }
         }
+    }
+
+    private boolean isWaterlogged(Block block) {
+        BlockData blockData = block.getBlockData();
+        if (blockData instanceof Waterlogged) {
+            return ((Waterlogged) blockData).isWaterlogged();
+        }
+        return false;
+    }
+
+    private boolean isRegularPiston(Block block) {
+        return block.getType() == Material.PISTON;
     }
 
     private void forEachAdjacentBlock(Block block, java.util.function.Consumer<Block> action) {
@@ -488,6 +547,30 @@ public class BlockEventListener implements Listener {
             case POWERED_RAIL:
             case ACTIVATOR_RAIL:
             case DETECTOR_RAIL:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    private boolean isCarpet(Material type) {
+        switch (type) {
+            case WHITE_CARPET:
+            case ORANGE_CARPET:
+            case MAGENTA_CARPET:
+            case LIGHT_BLUE_CARPET:
+            case YELLOW_CARPET:
+            case LIME_CARPET:
+            case PINK_CARPET:
+            case GRAY_CARPET:
+            case LIGHT_GRAY_CARPET:
+            case CYAN_CARPET:
+            case PURPLE_CARPET:
+            case BLUE_CARPET:
+            case BROWN_CARPET:
+            case GREEN_CARPET:
+            case RED_CARPET:
+            case BLACK_CARPET:
                 return true;
             default:
                 return false;
