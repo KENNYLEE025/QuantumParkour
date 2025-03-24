@@ -6,6 +6,7 @@ import java.util.WeakHashMap;
 
 import org.bukkit.Material;
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
@@ -13,6 +14,7 @@ import org.bukkit.block.BlockState;
 import org.bukkit.block.Sign;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Waterlogged;
+import org.bukkit.block.data.type.Slab;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -22,6 +24,8 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.RayTraceResult;
+import org.bukkit.util.Vector;
 
 public class BlockEventListener implements Listener {
 
@@ -85,6 +89,39 @@ public class BlockEventListener implements Listener {
             }
         }); */
     
+        if (brokenBlock.getBlockData() instanceof Slab) {
+            Slab slab = (Slab) brokenBlock.getBlockData();
+    
+            // Only modify behavior if it's a DOUBLE slab
+            if (slab.getType() == Slab.Type.DOUBLE) {
+                Player nearestPlayer = findNearestPlayer(brokenBlock);
+    
+                // Ensure there's a player nearby and they are in CREATIVE mode
+                if (nearestPlayer != null && nearestPlayer.getGameMode() == GameMode.CREATIVE) {
+                    event.setCancelled(true);
+    
+                    RayTraceResult result = nearestPlayer.getWorld().rayTraceBlocks(
+                        nearestPlayer.getEyeLocation(),
+                        nearestPlayer.getLocation().getDirection(),
+                        16.0D
+                    );
+    
+                    if (result != null) {
+                        Vector hitPosition = result.getHitPosition();
+                        double blockY = hitPosition.getY() - hitPosition.getBlockY();
+    
+                        if (blockY > 0.5D || hitPosition.getBlockY() - brokenBlock.getLocation().getBlockY() == 1) {
+                            slab.setType(Slab.Type.BOTTOM);
+                        } else {
+                            slab.setType(Slab.Type.TOP);
+                        }
+    
+                        brokenBlock.setBlockData((BlockData) slab);
+                    }
+                }
+            }
+        }
+
         // Existing logic for proneable blocks
         if (isProneableBlock(brokenType)) {
             return;
@@ -236,6 +273,20 @@ public class BlockEventListener implements Listener {
                 }
             }
         }
+    }
+
+    private Player findNearestPlayer(Block block) {
+        double closestDistance = 5.0; // Small radius to detect nearby players
+        Player nearestPlayer = null;
+    
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (player.getLocation().distance(block.getLocation()) < closestDistance) {
+                nearestPlayer = player;
+                closestDistance = player.getLocation().distance(block.getLocation());
+            }
+        }
+    
+        return nearestPlayer;
     }
 
     /* @EventHandler
