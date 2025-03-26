@@ -47,6 +47,7 @@ public final class QuantumParkour extends JavaPlugin {
         levelManager = new LevelManager();
         playerManager = new PlayerManager();
         pracManager = new PracManager();
+
         //qwobitManager = new QwobitManager();
         QuantumDatabase.initialize(); // Initialize the database
         registerEvents(
@@ -55,7 +56,8 @@ public final class QuantumParkour extends JavaPlugin {
                 PlayerJoinListener::new,
                 PlayerLeaveListener::new,
                 PlayerRespawnListener::new,
-                ServerTickEndListener::new
+                ServerTickEndListener::new,
+                PortalListener::new
         );
         commandManager.registerCommands(
                 CheckpointCommand::new,

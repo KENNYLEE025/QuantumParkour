@@ -1,17 +1,12 @@
 package com.quantumparkour.listener;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
 
 import org.bukkit.Material;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
-import org.bukkit.Location;
 import org.bukkit.block.Block;
-import org.bukkit.block.BlockFace;
-import org.bukkit.block.BlockState;
-import org.bukkit.block.Sign;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.block.data.Waterlogged;
 import org.bukkit.block.data.type.Slab;
@@ -70,52 +65,41 @@ public class BlockEventListener implements Listener {
         }
     }
 
-    // To-Do: Implement the following event handlers
-    // - BlockBreakEvent
-    // - BlockPhysicsEvent
-    // - SignChangeEvent
-    // - BlockPlaceEvent
-
     @EventHandler
     public void onBlockBreak(BlockBreakEvent event) {
         Block brokenBlock = event.getBlock();
         Material brokenType = brokenBlock.getType();
 
-        
-        /* // Handle adjacent signs
-        forEachAdjacentBlock(brokenBlock, adjacentBlock -> {
-            if (isSign(adjacentBlock.getType())) {
-                restoreSignText(adjacentBlock);
-            }
-        }); */
-    
+        // Handle slab breaking
         if (brokenBlock.getBlockData() instanceof Slab) {
             Slab slab = (Slab) brokenBlock.getBlockData();
-    
+
             // Only modify behavior if it's a DOUBLE slab
             if (slab.getType() == Slab.Type.DOUBLE) {
                 Player nearestPlayer = findNearestPlayer(brokenBlock);
-    
+
                 // Ensure there's a player nearby and they are in CREATIVE mode
                 if (nearestPlayer != null && nearestPlayer.getGameMode() == GameMode.CREATIVE) {
                     event.setCancelled(true);
-    
+
                     RayTraceResult result = nearestPlayer.getWorld().rayTraceBlocks(
                         nearestPlayer.getEyeLocation(),
                         nearestPlayer.getLocation().getDirection(),
                         16.0D
                     );
-    
+
                     if (result != null) {
                         Vector hitPosition = result.getHitPosition();
                         double blockY = hitPosition.getY() - hitPosition.getBlockY();
-    
+
+                        // Break the top half if the player is looking at the top
                         if (blockY > 0.5D || hitPosition.getBlockY() - brokenBlock.getLocation().getBlockY() == 1) {
                             slab.setType(Slab.Type.BOTTOM);
                         } else {
+                            // Break the bottom half if the player is looking at the bottom
                             slab.setType(Slab.Type.TOP);
                         }
-    
+
                         brokenBlock.setBlockData((BlockData) slab);
                     }
                 }
@@ -196,84 +180,33 @@ public class BlockEventListener implements Listener {
     public void onBlockPhysics(BlockPhysicsEvent event) {
         Block block = event.getBlock();
         Material type = block.getType();
-    
-        if (isWaterlogged(block)) {
+
+        // Allow pistons to function normally
+        if (isRedstoneComponent(type)) {
+            return; // Allow pistons to push or retract
+        }
+
+        // Prevent updates for proneable blocks
+        if (isProneableBlock(type)) {
             event.setCancelled(true);
             return;
         }
-    
-        // Step 1: Allow Signs to Restore Their Text Separately
-        /* if (isSign(type)) {
-            event.setCancelled(true); // Prevent sign updates
-            restoreSignText(block);
-            return;
-        } */
-    
-        // Allow sticky pistons to push carpets, but cancel if a regular piston is nearby
-        if (isCarpet(type)) {
-            boolean hasStickyPiston = false;
-            boolean hasRegularPiston = false;
-    
-            for (BlockFace face : BlockFace.values()) {
-                Block adjacentBlock = block.getRelative(face);
-                Material adjacentType = adjacentBlock.getType();
-    
-                if (adjacentType == Material.STICKY_PISTON) {
-                    hasStickyPiston = true;
-                } else if (adjacentType == Material.PISTON) {
-                    hasRegularPiston = true;
-                }
-            }
-    
-            // If a regular piston is adjacent, cancel the event
-            if (hasRegularPiston) {
-                event.setCancelled(true);
-                return;
-            }
-    
-            // If there's a sticky piston nearby, allow the physics update
-            if (hasStickyPiston) {
-                return;
-            }
-        }
-    
+
+        // Prevent updates for fluid or coral blocks
         if (isFluidOrBubbleColumn(block) || isCoralBlock(type)) {
-            event.setCancelled(true); // Cancel physics updates for fluids and coral blocks
+            event.setCancelled(true);
             return;
         }
-    
-        // Step 3: Check Adjacent Blocks for Proneable Block Interactions
+
+        // Check adjacent blocks for proneable block interactions
         forEachAdjacentBlock(block, adjacentBlock -> {
             Material adjacentType = adjacentBlock.getType();
-            if ((isProneableBlock(adjacentType) && !isCarpet(adjacentType)) || isCoralBlock(adjacentType) || isFluidOrBubbleColumn(adjacentBlock)) {
+            if (isProneableBlock(adjacentType) || isCoralBlock(adjacentType) || isFluidOrBubbleColumn(adjacentBlock)) {
                 event.setCancelled(true);
             }
         });
     }
     
-    @EventHandler
-    public void onPistonExtend(BlockPistonExtendEvent event) {
-        if (isRegularPiston(event.getBlock())) {
-            for (Block block : event.getBlocks()) {
-                if (isCarpet(block.getType())) {
-                    event.setCancelled(true); // Prevent regular pistons from pushing carpets
-                    return;
-                }
-            }
-        }
-    }
-
-    @EventHandler
-    public void onPistonRetract(BlockPistonRetractEvent event) {
-        if (isRegularPiston(event.getBlock())) {
-            for (Block block : event.getBlocks()) {
-                if (isCarpet(block.getType())) {
-                    event.setCancelled(true); // Prevent regular pistons from pulling carpets
-                    return;
-                }
-            }
-        }
-    }
 
     private Player findNearestPlayer(Block block) {
         double closestDistance = 5.0; // Small radius to detect nearby players
@@ -289,72 +222,6 @@ public class BlockEventListener implements Listener {
         return nearestPlayer;
     }
 
-    /* @EventHandler
-    public void onSignChange(SignChangeEvent event) {
-        Block block = event.getBlock();
-
-        // Cache the sign's text when it is changed
-        if (isSign(block.getType())) {
-            String[] lines = event.getLines();
-            signTextCache.put(block, lines.clone()); // Cache the text
-            cacheSignText(block); // Update the cache
-
-            Bukkit.getLogger().info("[DEBUG] Sign text cached at: " + block.getLocation());
-            for (int i = 0; i < lines.length; i++) {
-                Bukkit.getLogger().info("    Line " + i + ": " + lines[i]);
-            }
-        }
-    } */
-
-    /* private void restoreSignText(Block signBlock) {
-        if (!(signBlock.getState() instanceof Sign)) return;
-
-        Sign sign = (Sign) signBlock.getState();
-        Location loc = signBlock.getLocation();
-
-        // Debug: Check if the cache contains the sign
-        if (!signCache.containsKey(loc)) {
-            Bukkit.getLogger().info("[DEBUG] No cached text found for sign at: " + loc);
-            return;
-        }
-
-        Bukkit.getLogger().info("[DEBUG] Restoring text for sign at: " + loc);
-        String[] cachedLines = signCache.get(loc);
-
-        for (int i = 0; i < cachedLines.length; i++) {
-            sign.setLine(i, cachedLines[i]);
-            Bukkit.getLogger().info("[DEBUG]     Restored Line " + i + ": " + cachedLines[i]);
-        }
-
-        sign.update();
-    } */
-    
-    /* private void cacheSignText(Block signBlock) {
-        if (!(signBlock.getState() instanceof Sign)) return;
-    
-        Sign sign = (Sign) signBlock.getState();
-        Location loc = signBlock.getLocation();
-    
-        // Debug: Check if the cache already had this sign
-        if (signCache.containsKey(loc)) {
-            Bukkit.getLogger().info("[DEBUG] Updating cached text for sign at: " + loc);
-        } else {
-            Bukkit.getLogger().info("[DEBUG] Sign text cached at: " + loc);
-        }
-    
-        // Store the sign text
-        String[] lines = sign.getLines();
-        signCache.put(loc, lines);
-    
-        for (int i = 0; i < lines.length; i++) {
-            Bukkit.getLogger().info("[DEBUG]     Line " + i + ": " + lines[i]);
-        }
-    } */
-
-    // End of To-Do
-
-
-    
     
 
     @EventHandler
@@ -515,27 +382,8 @@ public class BlockEventListener implements Listener {
             case GREEN_CARPET:
             case RED_CARPET:
             case BLACK_CARPET:
-            /* case OAK_HANGING_SIGN:
-            case SPRUCE_HANGING_SIGN:
-            case BIRCH_HANGING_SIGN:
-            case JUNGLE_HANGING_SIGN:
-            case ACACIA_HANGING_SIGN:
-            case DARK_OAK_HANGING_SIGN:
-            case CRIMSON_HANGING_SIGN:
-            case WARPED_HANGING_SIGN:
-            case PALE_OAK_HANGING_SIGN:
-            case OAK_WALL_SIGN:
-            case SPRUCE_WALL_SIGN:
-            case BIRCH_WALL_SIGN:
-            case JUNGLE_WALL_SIGN:
-            case ACACIA_WALL_SIGN:
-            case DARK_OAK_WALL_SIGN:
-            case CRIMSON_WALL_SIGN:
-            case WARPED_WALL_SIGN:
-            case PALE_OAK_WALL_SIGN:
-            case CHERRY_SIGN:
-            case CHERRY_WALL_SIGN:
-            case CHERRY_HANGING_SIGN: */
+            case NETHER_PORTAL:
+            case END_PORTAL:
                 return true;
             default:
                 return false;
@@ -604,58 +452,5 @@ public class BlockEventListener implements Listener {
         }
     }
 
-    private boolean isCarpet(Material type) {
-        switch (type) {
-            case WHITE_CARPET:
-            case ORANGE_CARPET:
-            case MAGENTA_CARPET:
-            case LIGHT_BLUE_CARPET:
-            case YELLOW_CARPET:
-            case LIME_CARPET:
-            case PINK_CARPET:
-            case GRAY_CARPET:
-            case LIGHT_GRAY_CARPET:
-            case CYAN_CARPET:
-            case PURPLE_CARPET:
-            case BLUE_CARPET:
-            case BROWN_CARPET:
-            case GREEN_CARPET:
-            case RED_CARPET:
-            case BLACK_CARPET:
-                return true;
-            default:
-                return false;
-        }
-    }
 
-    /* private boolean isSign(Material type)
-    {
-        switch (type) {
-            case OAK_SIGN:
-            case SPRUCE_SIGN:
-            case BIRCH_SIGN:
-            case JUNGLE_SIGN:
-            case ACACIA_SIGN:
-            case DARK_OAK_SIGN:
-            case CRIMSON_SIGN:
-            case WARPED_SIGN:
-            case PALE_OAK_SIGN:
-            case OAK_WALL_SIGN:
-            case SPRUCE_WALL_SIGN:
-            case BIRCH_WALL_SIGN:
-            case JUNGLE_WALL_SIGN:
-            case ACACIA_WALL_SIGN:
-            case DARK_OAK_WALL_SIGN:
-            case CRIMSON_WALL_SIGN:
-            case WARPED_WALL_SIGN:
-            case PALE_OAK_WALL_SIGN:
-            case CHERRY_SIGN:
-            case CHERRY_WALL_SIGN:
-            case CHERRY_HANGING_SIGN:
-                return true;
-            default:
-                return false;
-        }
-    }
-        */
 }
