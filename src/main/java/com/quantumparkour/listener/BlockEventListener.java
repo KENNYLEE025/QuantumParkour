@@ -65,7 +65,6 @@ public class BlockEventListener implements Listener
         reloadConfig();
     }
 
-
     //---------------------------------------------------------------------------------------------
     private void loadCategories()
     {
