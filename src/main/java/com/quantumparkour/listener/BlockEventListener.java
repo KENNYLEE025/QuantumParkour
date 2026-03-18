@@ -55,7 +55,8 @@ public class BlockEventListener implements Listener
         BED
     }
 
-    private static final BlockFace[]                ADJACENT_BLOCKS = {BlockFace.UP, BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.WEST, BlockFace.EAST};
+    private static final BlockFace[]  ADJACENT_BLOCKS =
+            {BlockFace.UP, BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.WEST, BlockFace.EAST};
 
     //---------------------------------------------------------------------------------------------
     public BlockEventListener(JavaPlugin plugin)
