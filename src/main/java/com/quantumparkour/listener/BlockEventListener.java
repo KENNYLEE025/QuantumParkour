@@ -1,468 +1,530 @@
 package com.quantumparkour.listener;
 
-//---------------------------------------------------------------------------------------
-import java.util.Map;
-import java.util.WeakHashMap;
-
-import org.bukkit.Material;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
+import org.bukkit.Material;
+import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockFace;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.block.data.Waterlogged;
 import org.bukkit.block.data.type.Slab;
-import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
+
 import org.bukkit.event.block.*;
-import org.bukkit.event.entity.EntityExplodeEvent;
+import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
 
-public class BlockEventListener implements Listener {
+import java.util.EnumMap;
+import java.util.EnumSet;
 
-    //---------------------------------------------------------------------------------------
-    private final JavaPlugin plugin;
-    private final Map<Block, BlockData> savedBlocks = new WeakHashMap<>();
-    //private final Map<Block, String[]> signTextCache = new WeakHashMap<>();
-    //private final Map<Location, String[]> signCache = new HashMap<>();
+import java.util.Map;
+import java.util.HashMap;
+import java.util.function.Predicate;
 
-    //---------------------------------------------------------------------------------------
-    public BlockEventListener(JavaPlugin plugin) 
+//----------------------------------------------------------------------------------------------------------------------
+public class BlockEventListener implements Listener
+{
+    //---------------------------------------------------------------------------------------------
+    private final JavaPlugin                        m_plugin;
+    private final Map<Category, EnumSet<Material>>  m_categories            = new EnumMap<>(Category.class);
+    private final Map<Category, EnumSet<Material>>  m_fallbackCategories    = new EnumMap<>(Category.class);
+
+    //---------------------------------------------------------------------------------------------
+    private static final EnumSet<Category> UNSTABLE_CATEGORIES = EnumSet.of(
+            Category.CORAL,
+            Category.BED,
+            Category.FLUIDS,
+            Category.FRAGILE,
+            Category.GRAVITY,
+            Category.REDSTONE
+    );
+
+    public enum Category
     {
-        this.plugin = plugin;
+        FLUIDS,
+        FRAGILE,
+        REDSTONE,
+        GRAVITY,
+        CORAL,
+        BED
     }
 
-    //---------------------------------------------------------------------------------------
-    @EventHandler
-    public void onBlockFade(BlockFadeEvent event) 
+    private static final BlockFace[]                ADJACENT_BLOCKS = {BlockFace.UP, BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.WEST, BlockFace.EAST};
+
+    //---------------------------------------------------------------------------------------------
+    public BlockEventListener(JavaPlugin plugin)
     {
-        Block block = event.getBlock();
-        if (isCoralBlock(block.getType())) 
+        this.m_plugin = plugin;
+        initializeFallbackCategories();
+        reloadConfig();
+    }
+
+
+    //---------------------------------------------------------------------------------------------
+    private void loadCategories()
+    {
+        var section = m_plugin.getConfig().getConfigurationSection("physics.categories");
+        if (section == null)
         {
-            event.setCancelled(true);
-        }
-    }
-
-    //---------------------------------------------------------------------------------------
-    @EventHandler
-    public void onBlockFromTo(BlockFromToEvent event) 
-    {
-        Block source = event.getBlock();
-        Block destination = event.getToBlock();
-
-        if (isWaterlogged(source)) {
-            event.setCancelled(true);
+            m_plugin.getLogger().warning("Missing 'physics.categories' section in config. Using fallback categories.");
             return;
         }
 
-        if (isFluidOrBubbleColumn(source) || isFluidOrBubbleColumn(destination)) 
+        for (String key : section.getKeys(false))
         {
-            event.setCancelled(true);
-        }
-    }
+            Category category;
+            try
+            {
+                category = Category.valueOf(key.toUpperCase());
+            }
+            catch (IllegalArgumentException exception)
+            {
+                m_plugin.getLogger().warning("Unknown category '" + key + "' in config.");
+                continue;
+            }
 
-    //---------------------------------------------------------------------------------------
-    @EventHandler
-    public void onBlockForm(BlockFormEvent event) 
-    {
-        Block block = event.getBlock();
-        if (isFluidOrBubbleColumn(block)) 
-        {
-            event.setCancelled(true);
-        }
-    }
+            EnumSet<Material> set = EnumSet.noneOf(Material.class);
 
-    @EventHandler
-    public void onBlockBreak(BlockBreakEvent event) {
-        Block brokenBlock = event.getBlock();
-        Material brokenType = brokenBlock.getType();
+            for (String entry : section.getStringList(key))
+            {
+                if (entry.contains("*"))
+                {
+                    addWildcardMaterials(set, entry);
+                    continue;
+                }
 
-        // Handle slab breaking
-        if (brokenBlock.getBlockData() instanceof Slab) {
-            Slab slab = (Slab) brokenBlock.getBlockData();
-
-            // Only modify behavior if it's a DOUBLE slab
-            if (slab.getType() == Slab.Type.DOUBLE) {
-                Player nearestPlayer = findNearestPlayer(brokenBlock);
-
-                // Ensure there's a player nearby and they are in CREATIVE mode
-                if (nearestPlayer != null && nearestPlayer.getGameMode() == GameMode.CREATIVE) {
-                    event.setCancelled(true);
-
-                    RayTraceResult result = nearestPlayer.getWorld().rayTraceBlocks(
-                        nearestPlayer.getEyeLocation(),
-                        nearestPlayer.getLocation().getDirection(),
-                        16.0D
-                    );
-
-                    if (result != null) {
-                        Vector hitPosition = result.getHitPosition();
-                        double blockY = hitPosition.getY() - hitPosition.getBlockY();
-
-                        // Break the top half if the player is looking at the top
-                        if (blockY > 0.5D || hitPosition.getBlockY() - brokenBlock.getLocation().getBlockY() == 1) {
-                            slab.setType(Slab.Type.BOTTOM);
-                        } else {
-                            // Break the bottom half if the player is looking at the bottom
-                            slab.setType(Slab.Type.TOP);
-                        }
-
-                        brokenBlock.setBlockData((BlockData) slab);
-                    }
+                try
+                {
+                    set.add(Material.valueOf(entry.toUpperCase()));
+                }
+                catch (IllegalArgumentException exception)
+                {
+                    m_plugin.getLogger().warning("Invalid material '" + entry + "' in category '" + key + "'");
                 }
             }
-        }
 
-        // Existing logic for proneable blocks
-        if (isProneableBlock(brokenType)) {
-            return;
+            m_categories.put(category, set);
         }
-        if (brokenBlock.getType() == Material.BUBBLE_COLUMN) {
+    }
+
+    //---------------------------------------------------------------------------------------------
+    public void initializeFallbackCategories()
+    {
+        m_fallbackCategories.clear();
+
+        m_fallbackCategories.put(Category.FLUIDS, EnumSet.of(
+                Material.WATER,
+                Material.LAVA,
+                Material.BUBBLE_COLUMN
+        ));
+
+        m_fallbackCategories.put(Category.BED, collectMaterials(mat ->
+                mat.name().endsWith("_BED")));
+
+        m_fallbackCategories.put(Category.CORAL, collectMaterials(mat ->
+                mat.name().contains("CORAL")));
+
+        m_fallbackCategories.put(Category.GRAVITY, collectMaterials(Material::hasGravity));
+
+        m_fallbackCategories.put(Category.REDSTONE, collectMaterials(mat ->
+                mat.name().contains("REDSTONE")
+                        || mat.name().endsWith("_BUTTON")
+                        || mat == Material.LEVER
+                        || mat == Material.REPEATER
+                        || mat == Material.COMPARATOR
+                        || mat == Material.OBSERVER
+                        || mat == Material.PISTON
+                        || mat == Material.STICKY_PISTON
+                        || mat == Material.DISPENSER
+                        || mat == Material.DROPPER
+                        || mat == Material.NOTE_BLOCK
+                        || mat == Material.POWERED_RAIL
+                        || mat == Material.ACTIVATOR_RAIL
+                        || mat == Material.DETECTOR_RAIL
+                        || mat == Material.IRON_TRAPDOOR
+                        || mat == Material.TRIPWIRE
+                        || mat == Material.TRIPWIRE_HOOK
+                        || mat == Material.DAYLIGHT_DETECTOR
+                        || mat == Material.TARGET));
+
+        m_fallbackCategories.put(Category.FRAGILE, collectMaterials(mat ->
+                mat.name().endsWith("_SIGN")
+                        || mat.name().endsWith("_WALL_SIGN")
+                        || mat == Material.TORCH
+                        || mat == Material.WALL_TORCH
+                        || mat == Material.SOUL_TORCH
+                        || mat == Material.SOUL_WALL_TORCH
+                        || mat == Material.REDSTONE_TORCH
+                        || mat == Material.REDSTONE_WALL_TORCH
+                        || mat == Material.LADDER
+                        || mat == Material.SCAFFOLDING
+                        || mat == Material.VINE
+                        || mat == Material.LANTERN
+                        || mat == Material.CAKE
+                        || mat == Material.LILY_PAD
+                        || mat == Material.CACTUS
+                        || mat == Material.SNOW
+                        || mat == Material.BAMBOO
+                        || mat == Material.BELL
+                        || mat == Material.TWISTING_VINES
+                        || mat == Material.WEEPING_VINES
+                        || mat == Material.COCOA
+                        || mat == Material.ANVIL
+                        || mat == Material.DRAGON_EGG
+                        || mat == Material.NETHER_PORTAL
+                        || mat == Material.END_PORTAL));
+    }
+
+    //---------------------------------------------------------------------------------------------
+    private EnumSet<Material> collectMaterials(java.util.function.Predicate<Material> filter)
+    {
+        EnumSet<Material> set = EnumSet.noneOf(Material.class);
+        for (Material material : Material.values())
+        {
+            if (filter.test(material))
+            {
+                set.add(material);
+            }
+        }
+        return set;
+    }
+
+    //---------------------------------------------------------------------------------------------
+    public void reloadConfig()
+    {
+        m_plugin.reloadConfig();
+        loadCategories();
+    }
+
+    //---------------------------------------------------------------------------------------------
+    private void addWildcardMaterials(EnumSet<Material> enumSet, String pattern)
+    {
+        String regex = pattern.toUpperCase().replace("*", ".*");
+        for (Material material : Material.values())
+        {
+            if (material.name().matches(regex))
+            {
+                enumSet.add(material);
+            }
+        }
+    }
+
+    //---------------------------------------------------------------------------------------------
+    @EventHandler
+    public void onBlockFade(BlockFadeEvent event)
+    {
+        Block block = event.getBlock();
+        Material type = block.getType();
+        if (isCoralBlock(type))
+        {
             event.setCancelled(true);
         }
-    
-        forEachAdjacentBlock(brokenBlock, nearby -> {
-            if (isProneableBlock(nearby.getType())) {
-                savedBlocks.put(nearby, nearby.getBlockData());
-                nearby.setType(Material.AIR, false);
-            }
-        });
-    
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                savedBlocks.forEach((block, blockData) -> block.setBlockData(blockData, false));
-                savedBlocks.clear();
-            }
-        }.runTaskLater(plugin, 1L);
     }
 
-    @EventHandler
-    public void onBlockPlace(BlockPlaceEvent event) {
-        Block placedBlock = event.getBlock();
-        Material placedType = placedBlock.getType();
-        Bukkit.getLogger().info("[DEBUG] BlockPlaceEvent: " + placedBlock.getType());
-
-        // Check if the block is a sign type (could be any kind of sign: regular, wall sign, etc.)
-        /* if (isSign(placedBlock.getType())) {
-            Bukkit.getLogger().info("[DEBUG] Sign placed at: " + placedBlock.getLocation());
-            // Do not cache the text here; wait for SignChangeEvent
-        } */
-
-        // Existing logic for proneable blocks
-        if (isProneableBlock(placedType)) {
-            return; // Skip further handling if the placed block is proneable
-        }
-
-        if (placedBlock.getType() == Material.BUBBLE_COLUMN) {
-            event.setCancelled(true); // Cancel event for Bubble Column
-        }
-
-        // Handle adjacent blocks
-        forEachAdjacentBlock(placedBlock, nearby -> {
-            /* if (isSign(nearby.getType())) {
-                Bukkit.getLogger().info("[DEBUG] Restoring text for adjacent sign at: " + nearby.getLocation());
-                restoreSignText(nearby); // Restore the cached text for adjacent signs
-            } else  */
-             if (isProneableBlock(nearby.getType())
-                    || nearby.getType() == Material.BUBBLE_COLUMN 
-                    || nearby.getType() == Material.WATER 
-                    || nearby.getType() == Material.LAVA) {
-                savedBlocks.put(nearby, nearby.getBlockData());
-                nearby.setType(Material.AIR, false); // Remove the proneable block
-            }
-        });
-
-        // Restore the saved blocks after the event
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                savedBlocks.forEach((block, blockData) -> block.setBlockData(blockData, false));
-                savedBlocks.clear();
-            }
-        }.runTaskLater(plugin, 1L);
-    }
-
-    @EventHandler
-    public void onBlockPhysics(BlockPhysicsEvent event) {
+    //---------------------------------------------------------------------------------------------
+    @EventHandler(ignoreCancelled = true)
+    public void onBlockPhysics(BlockPhysicsEvent event)
+    {
         Block block = event.getBlock();
         Material type = block.getType();
 
-        // Allow pistons to function normally
-        if (isRedstoneComponent(type)) {
-            return; // Allow pistons to push or retract
-        }
+        // Early outs
+        if (type.isAir()) return;
 
-        // Prevent updates for proneable blocks
-        if (isProneableBlock(type)) {
-            event.setCancelled(true);
-            return;
-        }
+        // Early out for redstone components
+        if (isRedstoneComponent(type)) return;
 
-        // Prevent updates for fluid or coral blocks
-        if (isFluidOrBubbleColumn(block) || isCoralBlock(type)) {
-            event.setCancelled(true);
-            return;
-        }
-
-        // Check adjacent blocks for proneable block interactions
-        forEachAdjacentBlock(block, adjacentBlock -> {
-            Material adjacentType = adjacentBlock.getType();
-            if (isProneableBlock(adjacentType) || isCoralBlock(adjacentType) || isFluidOrBubbleColumn(adjacentBlock)) {
-                event.setCancelled(true);
-            }
-        });
-    }
-    
-
-    private Player findNearestPlayer(Block block) {
-        double closestDistance = 5.0; // Small radius to detect nearby players
-        Player nearestPlayer = null;
-    
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            if (player.getLocation().distance(block.getLocation()) < closestDistance) {
-                nearestPlayer = player;
-                closestDistance = player.getLocation().distance(block.getLocation());
-            }
-        }
-    
-        return nearestPlayer;
-    }
-
-    
-
-    @EventHandler
-    public void onBlockInteract(PlayerInteractEvent event) {
-        Block interactedBlock = event.getClickedBlock();
-        if (interactedBlock == null) return;
-    
-        if (event.getAction() == Action.RIGHT_CLICK_BLOCK && interactedBlock.getType() == Material.DRAGON_EGG && !event.getPlayer().isSneaking()) {
-            event.setCancelled(true);
-        }
-    
-        Material interactedType = interactedBlock.getType();
-        if (isProneableBlock(interactedType)) {
-            return;
-        }
-        if (interactedBlock.getType() == Material.BUBBLE_COLUMN) {
-            event.setCancelled(true);
-        }
-    
-        forEachAdjacentBlock(interactedBlock, nearby -> {
-            if (isProneableBlock(nearby.getType())) {
-                savedBlocks.put(nearby, nearby.getBlockData());
-                nearby.setType(Material.AIR, false);
-            }
-        });
-    
-        new BukkitRunnable() {
-            @Override
-            public void run() {
-                savedBlocks.forEach((block, blockData) -> block.setBlockData(blockData, false));
-                savedBlocks.clear();
-            }
-        }.runTaskLater(plugin, 1L);
-    }
-    
-    @EventHandler
-    public void onEntityExplode(EntityExplodeEvent event) {
-        EntityType entityType = event.getEntityType();
-        if (entityType == EntityType.END_CRYSTAL || entityType == EntityType.TNT_MINECART) {
+        if (hasBlockedPhysicsNeighbor(block))
+        {
             event.setCancelled(true);
         }
     }
 
-    @EventHandler
-    public void onBedExplode(BlockExplodeEvent event) {
+    //---------------------------------------------------------------------------------------------
+    @EventHandler   //(ignoreCancelled = true)
+    public void onBlockBreak(BlockBreakEvent event)
+    {
         Block block = event.getBlock();
-        if (isBed(block.getType()) || block.getType() == Material.RESPAWN_ANCHOR) {
+        Material type = block.getType();
+        BlockData blockData = block.getBlockData();
+
+        if (blockData instanceof Slab slab && slab.getType() == Slab.Type.DOUBLE)
+        {
+            double playerRadius = 5.0;
+            Player player = findNearbyCreativePlayer(block, playerRadius);
+            if (player != null)
+            {
+                event.setCancelled(true);
+                doubleSlabBreakEvent(block, player);
+                return;
+            }
+        }
+
+        if (isFragileBlock(type))     return;
+
+        if (type == Material.BUBBLE_COLUMN)
+        {
+            event.setCancelled(true);
+            return;
+        }
+        tempRemoveAdjacentBlocks(block, this::isUnstableBlock);
+    }
+
+    //---------------------------------------------------------------------------------------------
+    @EventHandler(ignoreCancelled = true)
+    public void onFallingBlockLand(EntityChangeBlockEvent event)
+    {
+
+    }
+
+    //---------------------------------------------------------------------------------------------
+    @EventHandler(ignoreCancelled = true)
+    public void onBlockPlace(BlockPlaceEvent event)
+    {
+        Block block = event.getBlockPlaced();
+        Material type = block.getType();
+
+        if (isFragileBlock(type))   return;
+
+        if (type == Material.BUBBLE_COLUMN)
+        {
+            event.setCancelled(true);
+            return;
+        }
+
+        tempRemoveAdjacentBlocks(block, this::isUnstableBlock);
+    }
+
+    //---------------------------------------------------------------------------------------------
+    @EventHandler(ignoreCancelled = true)
+    public void onBlockFromTo(BlockFromToEvent event)
+    {
+        Block block = event.getBlock();
+        Material type = block.getType();
+        if (isFluid(type))
+        {
             event.setCancelled(true);
         }
     }
 
-    @EventHandler
-    public void onBedOrAnchorUse(PlayerInteractEvent event) {
-        if (event.getAction() == Action.RIGHT_CLICK_BLOCK) {
-            Block block = event.getClickedBlock();
-            if (block == null) return;
-
-            Material type = block.getType();
-            if (isBed(type) || type == Material.RESPAWN_ANCHOR) {
-                Player player = event.getPlayer();
-
-                // Allow shift-right click for placement, prevent explosions otherwise
-                if (!player.isSneaking()) {
-                    event.setCancelled(true);
-                }
-            }
+    //---------------------------------------------------------------------------------------------
+    @EventHandler(ignoreCancelled = true)
+    public void onBlockForm(BlockFormEvent event)
+    {
+        Block block = event.getBlock();
+        Material type = block.getType();
+        if (isFluid(type))
+        {
+            event.setCancelled(true);
         }
     }
 
-    private boolean isWaterlogged(Block block) {
-        BlockData blockData = block.getBlockData();
-        if (blockData instanceof Waterlogged) {
-            return ((Waterlogged) blockData).isWaterlogged();
+    //---------------------------------------------------------------------------------------------
+    @EventHandler(ignoreCancelled = true)
+    public void onBedOrAnchorUse(PlayerInteractEvent event)
+    {
+        Block block = event.getClickedBlock();
+
+        if (event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        if (block == null) return;
+
+        Material type = block.getType();
+        Player player = event.getPlayer();
+
+        if (isBed(type) && player.getWorld().getEnvironment() != World.Environment.NORMAL)
+        {
+            event.setCancelled(true);
+        }
+        if (type == Material.RESPAWN_ANCHOR && player.getWorld().getEnvironment() == World.Environment.NORMAL)
+        {
+            event.setCancelled(true);
+        }
+    }
+
+    //---------------------------------------------------------------------------------------------
+    // Helper functions
+    private boolean hasBlockedPhysicsNeighbor(Block block)
+    {
+        Material type = block.getType();
+
+        for (BlockFace blockFace : ADJACENT_BLOCKS)
+        {
+            Block adjacentBlock = block.getRelative(blockFace);
+            Material adjacentType = adjacentBlock.getType();
+            if (!isUnstableBlock(adjacentBlock))
+            {
+                continue;
+            }
+
+            if (isRedstoneComponent(adjacentType))
+            {
+                continue;
+            }
+
+            if (isGravityBlock(type) && isGravityBlock(adjacentType))
+            {
+                continue;
+            }
+
+            return true;
         }
         return false;
     }
 
-    private boolean isRegularPiston(Block block) {
-        return block.getType() == Material.PISTON;
-    }
+    //---------------------------------------------------------------------------------------------
+    private Player findNearbyCreativePlayer(Block block, double radius)
+    {
+        Player nearest = null;
+        double closestDistance = radius;
 
-    private void forEachAdjacentBlock(Block block, java.util.function.Consumer<Block> action) {
-        for (int x = -1; x <= 1; x++) {
-            for (int y = -1; y <= 1; y++) {
-                for (int z = -1; z <= 1; z++) {
-                    if (x == 0 && y == 0 && z == 0) continue; // Skip the block itself
-                    Block adjacentBlock = block.getRelative(x, y, z);
-                    action.accept(adjacentBlock);
-                }
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if (player.getGameMode() != GameMode.CREATIVE) continue;
+
+            double distance = player.getLocation().distance(block.getLocation());
+            if (distance < closestDistance)
+            {
+                nearest = player;
+                closestDistance = distance;
             }
         }
+        return nearest;
     }
 
+    //---------------------------------------------------------------------------------------------
+    private void doubleSlabBreakEvent(Block block, Player player)
+    {
+        BlockData data = block.getBlockData();
+        if (!(data instanceof Slab slab) || slab.getType() != Slab.Type.DOUBLE)
+        {
+            return;
+        }
 
-    private boolean isFluidOrBubbleColumn(Block block) {
+        Slab.Type newSlabType = getHitSlabHalf(player, block);
+
+        if (newSlabType == null) return;
+
+        slab.setType(newSlabType);
+        block.setBlockData(slab, false);
+    }
+
+    //---------------------------------------------------------------------------------------------
+    private Slab.Type getHitSlabHalf(Player player, Block slabBlock)
+    {
+        double maxDistance = 16.0;
+        RayTraceResult result = player.getWorld().rayTraceBlocks(
+                player.getEyeLocation(),
+                player.getLocation().getDirection(),
+                maxDistance
+        );
+
+        if (result == null) return null;
+
+        Vector hitPosition = result.getHitPosition();
+        double offsetY = hitPosition.getY() - slabBlock.getY();
+
+        if (offsetY > 0.5 || hitPosition.getBlockY() - slabBlock.getY() == 1)
+        {
+            return Slab.Type.BOTTOM;
+        }
+
+        return Slab.Type.TOP;
+    }
+
+    //---------------------------------------------------------------------------------------------
+    private void tempRemoveAdjacentBlocks(Block center, Predicate<Block> filter)
+    {
+        Map<Block, BlockData> savedBlocks = new HashMap<>();
+        for (BlockFace adjacentFace : ADJACENT_BLOCKS)
+        {
+            Block adjacentBlock = center.getRelative(adjacentFace);
+            if (filter.test(adjacentBlock))
+            {
+                savedBlocks.put(adjacentBlock, adjacentBlock.getBlockData());
+                adjacentBlock.setType(Material.AIR, false);
+            }
+        }
+        restoreSavedBlocks(savedBlocks);
+    }
+
+    //---------------------------------------------------------------------------------------------
+    private void restoreSavedBlocks(Map<Block, BlockData> savedBlocks) {
+        if (savedBlocks.isEmpty()) return;
+
+        new BukkitRunnable()
+        {
+            @Override
+            public void run()
+            {
+                savedBlocks.forEach((block, data) -> block.setBlockData(data, false));
+            }
+        }.runTaskLater(m_plugin, 1L);
+    }
+
+    //---------------------------------------------------------------------------------------------
+    private boolean isInCategory(Category category, Material type)
+    {
+        EnumSet<Material> configuredSet = m_categories.get(category);
+        if (configuredSet != null && configuredSet.contains(type))
+        {
+            return true;
+        }
+        EnumSet<Material> fallbackSet = m_fallbackCategories.get(category);
+        return fallbackSet != null && fallbackSet.contains(type);
+    }
+
+    //---------------------------------------------------------------------------------------------
+    private boolean isCoralBlock(Material type)
+    {
+        return isInCategory(Category.CORAL, type);
+    }
+
+    //---------------------------------------------------------------------------------------------
+    private boolean isBed(Material type)
+    {
+        return isInCategory(Category.BED, type);
+    }
+
+    //---------------------------------------------------------------------------------------------
+    private boolean isFluid(Material type)
+    {
+        return isInCategory(Category.FLUIDS, type);
+    }
+
+    //---------------------------------------------------------------------------------------------
+    private boolean isRedstoneComponent(Material type)
+    {
+        return isInCategory(Category.REDSTONE, type);
+    }
+
+    //---------------------------------------------------------------------------------------------
+    private boolean isFragileBlock(Material type)
+    {
+        return isInCategory(Category.FRAGILE, type);
+    }
+
+    //---------------------------------------------------------------------------------------------
+    private boolean isGravityBlock(Material type)
+    {
+        return isInCategory(Category.GRAVITY, type);
+    }
+
+    //---------------------------------------------------------------------------------------------
+    private boolean isUnstableBlock(Block block)
+    {
         Material type = block.getType();
-        return type == Material.WATER || type == Material.LAVA || type == Material.BUBBLE_COLUMN;
-    }
-
-    private boolean isBed(Material type) {
-        return type == Material.RED_BED 
-        || type == Material.BLUE_BED 
-        || type == Material.GREEN_BED 
-        || type == Material.YELLOW_BED 
-        || type == Material.PURPLE_BED 
-        || type == Material.BLACK_BED 
-        || type == Material.WHITE_BED 
-        || type == Material.ORANGE_BED 
-        || type == Material.MAGENTA_BED 
-        || type == Material.LIGHT_BLUE_BED 
-        || type == Material.LIME_BED 
-        || type == Material.PINK_BED 
-        || type == Material.GRAY_BED 
-        || type == Material.LIGHT_GRAY_BED 
-        || type == Material.CYAN_BED 
-        || type == Material.BROWN_BED;
-    }
-
-    private boolean isProneableBlock(Material type) {
-        switch (type) {
-            case LADDER:
-            case VINE:
-            case LANTERN:
-            case COCOA:
-            case COCOA_BEANS:
-            case SNOW:
-            case BAMBOO:
-            case OAK_SIGN:
-            case SPRUCE_SIGN:
-            case BIRCH_SIGN:
-            case JUNGLE_SIGN:
-            case ACACIA_SIGN:
-            case DARK_OAK_SIGN:
-            case CRIMSON_SIGN:
-            case WARPED_SIGN:
-            case PALE_OAK_SIGN:
-            case BELL:
-            case TWISTING_VINES:
-            case WEEPING_VINES:
-            case CAKE:
-            case ANVIL:
-            case DRAGON_EGG:
-            case LILY_PAD:
-            case CACTUS:
-            case WHITE_CARPET:
-            case ORANGE_CARPET:
-            case MAGENTA_CARPET:
-            case LIGHT_BLUE_CARPET:
-            case YELLOW_CARPET:
-            case LIME_CARPET:
-            case PINK_CARPET:
-            case GRAY_CARPET:
-            case LIGHT_GRAY_CARPET:
-            case CYAN_CARPET:
-            case PURPLE_CARPET:
-            case BLUE_CARPET:
-            case BROWN_CARPET:
-            case GREEN_CARPET:
-            case RED_CARPET:
-            case BLACK_CARPET:
-            case NETHER_PORTAL:
-            case END_PORTAL:
+        for (Category category : UNSTABLE_CATEGORIES)
+        {
+            if (isInCategory(category, type))
+            {
                 return true;
-            default:
-                return false;
+            }
         }
+        return false;
     }
-
-    private boolean isCoralBlock(Material type) {
-        switch (type) {
-            case TUBE_CORAL_BLOCK:
-            case BRAIN_CORAL_BLOCK:
-            case BUBBLE_CORAL_BLOCK:
-            case FIRE_CORAL_BLOCK:
-            case HORN_CORAL_BLOCK:
-            case TUBE_CORAL:
-            case BRAIN_CORAL:
-            case BUBBLE_CORAL:
-            case FIRE_CORAL:
-            case HORN_CORAL:
-            case TUBE_CORAL_FAN:
-            case BRAIN_CORAL_FAN:
-            case BUBBLE_CORAL_FAN:
-            case FIRE_CORAL_FAN:
-            case HORN_CORAL_FAN:
-            case TUBE_CORAL_WALL_FAN:
-            case BRAIN_CORAL_WALL_FAN:
-            case BUBBLE_CORAL_WALL_FAN:
-            case FIRE_CORAL_WALL_FAN:
-            case HORN_CORAL_WALL_FAN:
-                return true;
-            default:
-                return false;
-        }
-    }
-
-    private boolean isRedstoneComponent(Material type) {
-        switch (type) {
-            case REDSTONE_WIRE:
-            case REDSTONE_TORCH:
-            case REDSTONE_BLOCK:
-            case LEVER:
-            case STONE_BUTTON:
-            case OAK_BUTTON:
-            case SPRUCE_BUTTON:
-            case BIRCH_BUTTON:
-            case JUNGLE_BUTTON:
-            case ACACIA_BUTTON:
-            case DARK_OAK_BUTTON:
-            case CRIMSON_BUTTON:
-            case WARPED_BUTTON:
-            case PALE_OAK_BUTTON:
-            case REPEATER:
-            case IRON_TRAPDOOR:
-            case COMPARATOR:
-            case PISTON:
-            case STICKY_PISTON:
-            case OBSERVER:
-            case DISPENSER:
-            case DROPPER:
-            case NOTE_BLOCK:
-            case POWERED_RAIL:
-            case ACTIVATOR_RAIL:
-            case DETECTOR_RAIL:
-                return true;
-            default:
-                return false;
-        }
-    }
-
-
 }
