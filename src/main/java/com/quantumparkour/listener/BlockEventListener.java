@@ -1,5 +1,6 @@
 package com.quantumparkour.listener;
 
+//---------------------------------------------------------------------------------------
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -24,26 +25,33 @@ import org.bukkit.util.Vector;
 
 public class BlockEventListener implements Listener {
 
+    //---------------------------------------------------------------------------------------
     private final JavaPlugin plugin;
     private final Map<Block, BlockData> savedBlocks = new WeakHashMap<>();
     //private final Map<Block, String[]> signTextCache = new WeakHashMap<>();
     //private final Map<Location, String[]> signCache = new HashMap<>();
 
-
-    public BlockEventListener(JavaPlugin plugin) {
+    //---------------------------------------------------------------------------------------
+    public BlockEventListener(JavaPlugin plugin) 
+    {
         this.plugin = plugin;
     }
 
+    //---------------------------------------------------------------------------------------
     @EventHandler
-    public void onBlockFade(BlockFadeEvent event) {
+    public void onBlockFade(BlockFadeEvent event) 
+    {
         Block block = event.getBlock();
-        if (isCoralBlock(block.getType())) {
+        if (isCoralBlock(block.getType())) 
+        {
             event.setCancelled(true);
         }
     }
 
+    //---------------------------------------------------------------------------------------
     @EventHandler
-    public void onBlockFromTo(BlockFromToEvent event) {
+    public void onBlockFromTo(BlockFromToEvent event) 
+    {
         Block source = event.getBlock();
         Block destination = event.getToBlock();
 
@@ -52,15 +60,19 @@ public class BlockEventListener implements Listener {
             return;
         }
 
-        if (isFluidOrBubbleColumn(source) || isFluidOrBubbleColumn(destination)) {
+        if (isFluidOrBubbleColumn(source) || isFluidOrBubbleColumn(destination)) 
+        {
             event.setCancelled(true);
         }
     }
 
+    //---------------------------------------------------------------------------------------
     @EventHandler
-    public void onBlockForm(BlockFormEvent event) {
+    public void onBlockForm(BlockFormEvent event) 
+    {
         Block block = event.getBlock();
-        if (isFluidOrBubbleColumn(block)) {
+        if (isFluidOrBubbleColumn(block)) 
+        {
             event.setCancelled(true);
         }
     }
