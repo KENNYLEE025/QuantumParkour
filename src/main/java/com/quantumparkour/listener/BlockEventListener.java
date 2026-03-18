@@ -13,7 +13,6 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 import org.bukkit.event.block.*;
-import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -36,15 +35,6 @@ public class BlockEventListener implements Listener
     private final Map<Category, EnumSet<Material>>  m_fallbackCategories    = new EnumMap<>(Category.class);
 
     //---------------------------------------------------------------------------------------------
-    private static final EnumSet<Category> UNSTABLE_CATEGORIES = EnumSet.of(
-            Category.CORAL,
-            Category.BED,
-            Category.FLUIDS,
-            Category.FRAGILE,
-            Category.GRAVITY,
-            Category.REDSTONE
-    );
-
     public enum Category
     {
         FLUIDS,
@@ -55,7 +45,19 @@ public class BlockEventListener implements Listener
         BED
     }
 
-    private static final BlockFace[]  ADJACENT_BLOCKS =  {BlockFace.UP, BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.WEST, BlockFace.EAST};
+    //---------------------------------------------------------------------------------------------
+    private static final EnumSet<Category> UNSTABLE_CATEGORIES = EnumSet.of(
+            Category.CORAL,
+            Category.BED,
+            Category.FLUIDS,
+            Category.FRAGILE,
+            Category.GRAVITY,
+            Category.REDSTONE
+    );
+
+    //---------------------------------------------------------------------------------------------
+    private static final BlockFace[]  ADJACENT_BLOCKS
+            =  {BlockFace.UP, BlockFace.DOWN, BlockFace.NORTH, BlockFace.SOUTH, BlockFace.WEST, BlockFace.EAST};
 
     //---------------------------------------------------------------------------------------------
     public BlockEventListener(JavaPlugin plugin)
@@ -77,38 +79,57 @@ public class BlockEventListener implements Listener
 
         for (String key : section.getKeys(false))
         {
-            Category category;
-            try
-            {
-                category = Category.valueOf(key.toUpperCase());
-            }
-            catch (IllegalArgumentException exception)
-            {
-                m_plugin.getLogger().warning("Unknown category '" + key + "' in config.");
-                continue;
-            }
+            Category category = parseCategory(key);
+            if (category == null) continue;
 
-            EnumSet<Material> set = EnumSet.noneOf(Material.class);
+            EnumSet<Material> materials = parseMaterials(section.getStringList(key), key);
+            m_categories.put(category, materials);
+        }
+    }
 
-            for (String entry : section.getStringList(key))
-            {
-                if (entry.contains("*"))
-                {
-                    addWildcardMaterials(set, entry);
-                    continue;
-                }
+    //---------------------------------------------------------------------------------------------
+    private Category parseCategory(String key)
+    {
+        try
+        {
+            return Category.valueOf(key.toUpperCase());
+        }
+        catch (IllegalArgumentException exception)
+        {
+            m_plugin.getLogger().warning("Unknown category '" + key + "' in config.");
+            return null;
+        }
+    }
 
-                try
-                {
-                    set.add(Material.valueOf(entry.toUpperCase()));
-                }
-                catch (IllegalArgumentException exception)
-                {
-                    m_plugin.getLogger().warning("Invalid material '" + entry + "' in category '" + key + "'");
-                }
-            }
+    //---------------------------------------------------------------------------------------------
+    private EnumSet<Material> parseMaterials(java.util.List<String> entries, String categoryKey)
+    {
+        EnumSet<Material> materials = EnumSet.noneOf(Material.class);
 
-            m_categories.put(category, set);
+        for (String entry : entries)
+        {
+            addMaterialEntry(materials, entry, categoryKey);
+        }
+
+        return materials;
+    }
+
+    //---------------------------------------------------------------------------------------------
+    private void addMaterialEntry(EnumSet<Material> materials, String entry, String categoryKey)
+    {
+        if (entry.contains("*"))
+        {
+            addWildcardMaterials(materials, entry);
+            return;
+        }
+
+        try
+        {
+            materials.add(Material.valueOf(entry.toUpperCase()));
+        }
+        catch (IllegalArgumentException exception)
+        {
+            m_plugin.getLogger().warning("Invalid material '" + entry + "' in category '" + categoryKey + "'");
         }
     }
 
@@ -123,12 +144,8 @@ public class BlockEventListener implements Listener
                 Material.BUBBLE_COLUMN
         ));
 
-        m_fallbackCategories.put(Category.BED, collectMaterials(mat ->
-                mat.name().endsWith("_BED")));
-
-        m_fallbackCategories.put(Category.CORAL, collectMaterials(mat ->
-                mat.name().contains("CORAL")));
-
+        m_fallbackCategories.put(Category.BED, collectMaterials(mat -> mat.name().endsWith("_BED")));
+        m_fallbackCategories.put(Category.CORAL, collectMaterials(mat -> mat.name().contains("CORAL")));
         m_fallbackCategories.put(Category.GRAVITY, collectMaterials(Material::hasGravity));
 
         m_fallbackCategories.put(Category.REDSTONE, collectMaterials(mat ->
@@ -235,14 +252,10 @@ public class BlockEventListener implements Listener
 
         // Early outs
         if (type.isAir()) return;
-
-        // Early out for redstone components
         if (isRedstoneComponent(type)) return;
+        if (!hasBlockedPhysicsNeighbor(block))  return;
 
-        if (hasBlockedPhysicsNeighbor(block))
-        {
-            event.setCancelled(true);
-        }
+        event.setCancelled(true);
     }
 
     //---------------------------------------------------------------------------------------------
@@ -252,6 +265,8 @@ public class BlockEventListener implements Listener
         Block block = event.getBlock();
         Material type = block.getType();
         BlockData blockData = block.getBlockData();
+
+        if (isFragileBlock(type))     return;
 
         if (blockData instanceof Slab slab && slab.getType() == Slab.Type.DOUBLE)
         {
@@ -265,21 +280,12 @@ public class BlockEventListener implements Listener
             }
         }
 
-        if (isFragileBlock(type))     return;
-
         if (type == Material.BUBBLE_COLUMN)
         {
             event.setCancelled(true);
             return;
         }
         tempRemoveAdjacentBlocks(block, this::isUnstableBlock);
-    }
-
-    //---------------------------------------------------------------------------------------------
-    @EventHandler(ignoreCancelled = true)
-    public void onFallingBlockLand(EntityChangeBlockEvent event)
-    {
-
     }
 
     //---------------------------------------------------------------------------------------------
@@ -340,6 +346,7 @@ public class BlockEventListener implements Listener
         {
             event.setCancelled(true);
         }
+
         if (type == Material.RESPAWN_ANCHOR && player.getWorld().getEnvironment() == World.Environment.NORMAL)
         {
             event.setCancelled(true);
@@ -382,7 +389,8 @@ public class BlockEventListener implements Listener
         Player nearest = null;
         double closestDistance = radius;
 
-        for (Player player : Bukkit.getOnlinePlayers()) {
+        for (Player player : Bukkit.getOnlinePlayers())
+        {
             if (player.getGameMode() != GameMode.CREATIVE) continue;
 
             double distance = player.getLocation().distance(block.getLocation());

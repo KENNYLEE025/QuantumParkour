@@ -10,8 +10,10 @@ import org.bukkit.inventory.ItemStack;
 
 import com.quantumparkour.QuantumParkour;
 
-public class CheckpointItemListener implements Listener {
-
+//----------------------------------------------------------------------------------------------------------------------
+public class CheckpointItemListener implements Listener
+{
+    //---------------------------------------------------------------------------------------------
     @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event)
     {
@@ -20,7 +22,7 @@ public class CheckpointItemListener implements Listener {
 
         if (item == null) return;
 
-        if (item.getType() != Material.RED_DYE && "§6Practice Checkpoint".equals(item.getItemMeta().getDisplayName()))
+        if (item.getType() == Material.RED_DYE && "§6Practice Checkpoint".equals(item.getItemMeta().getDisplayName()))
         {
             event.setCancelled(true);
             if (QuantumParkour.getPracManager().getPracLocation(player) == null)
