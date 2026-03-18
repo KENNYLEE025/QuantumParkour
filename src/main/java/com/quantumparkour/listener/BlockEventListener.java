@@ -416,17 +416,14 @@ public class BlockEventListener implements Listener
     private Slab.Type getHitSlabHalf(Player player, Block slabBlock)
     {
         double maxDistance = 16.0;
-        RayTraceResult result = player.getWorld().rayTraceBlocks(
-                player.getEyeLocation(),
-                player.getLocation().getDirection(),
-                maxDistance
-        );
+        RayTraceResult result = player.getWorld().rayTraceBlocks(player.getEyeLocation(), player.getLocation().getDirection(), maxDistance);
 
         if (result == null) return null;
 
         Vector hitPosition = result.getHitPosition();
         double offsetY = hitPosition.getY() - slabBlock.getY();
 
+        // Check for either top or bottom half
         if (offsetY > 0.5 || hitPosition.getBlockY() - slabBlock.getY() == 1)
         {
             return Slab.Type.BOTTOM;
@@ -438,13 +435,18 @@ public class BlockEventListener implements Listener
     //---------------------------------------------------------------------------------------------
     private void tempRemoveAdjacentBlocks(Block center, Predicate<Block> filter)
     {
-        Map<Block, BlockData> savedBlocks = new HashMap<>();
+        // Block state instead of BlockData - saves sign data
+        Map<Block, org.bukkit.block.BlockState> savedBlocks = new HashMap<>();
+
         for (BlockFace adjacentFace : ADJACENT_BLOCKS)
         {
             Block adjacentBlock = center.getRelative(adjacentFace);
             if (filter.test(adjacentBlock))
             {
-                savedBlocks.put(adjacentBlock, adjacentBlock.getBlockData());
+                savedBlocks.put(adjacentBlock, adjacentBlock.getState());
+
+                // Material to set to AIR
+                // Apply physics: False (Second argument)
                 adjacentBlock.setType(Material.AIR, false);
             }
         }
@@ -452,7 +454,7 @@ public class BlockEventListener implements Listener
     }
 
     //---------------------------------------------------------------------------------------------
-    private void restoreSavedBlocks(Map<Block, BlockData> savedBlocks) {
+    private void restoreSavedBlocks(Map<Block, org.bukkit.block.BlockState> savedBlocks) {
         if (savedBlocks.isEmpty()) return;
 
         new BukkitRunnable()
@@ -460,7 +462,9 @@ public class BlockEventListener implements Listener
             @Override
             public void run()
             {
-                savedBlocks.forEach((block, data) -> block.setBlockData(data, false));
+                // Force update even with block is changed: True
+                // Trigger physics:  False
+                savedBlocks.forEach((block, state) -> state.update(true, false));
             }
         }.runTaskLater(m_plugin, 1L);
     }
