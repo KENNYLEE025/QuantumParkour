@@ -22,7 +22,8 @@ import com.quantumparkour.util.PlaceholderAPIWrapper;
 import java.util.List;
 import java.util.function.Supplier;
 
-public final class QuantumParkour extends JavaPlugin {
+public final class QuantumParkour extends JavaPlugin
+{
     private static QuantumParkour instance;
     private static CommandManager commandManager;
     private static ConfigManager configManager;
@@ -32,12 +33,14 @@ public final class QuantumParkour extends JavaPlugin {
     //private static QwobitManager qwobitManager;
 
     @Override
-    public void onLoad() {
+    public void onLoad()
+    {
         ConfigurationSerialization.registerClass(Level.class);
     }
 
     @Override
-    public void onEnable() {
+    public void onEnable()
+    {
         PlaceholderAPIWrapper.init();
         getConfig().options().copyDefaults(true);
         saveDefaultConfig();
@@ -76,7 +79,8 @@ public final class QuantumParkour extends JavaPlugin {
     }
 
     @SafeVarargs
-    private void registerEvents(Supplier<Listener>... suppliers) {
+    private void registerEvents(Supplier<Listener>... suppliers)
+    {
         List.of(suppliers).forEach(listenerSupplier -> getServer().getPluginManager().registerEvents(listenerSupplier.get(), this));
     }
 

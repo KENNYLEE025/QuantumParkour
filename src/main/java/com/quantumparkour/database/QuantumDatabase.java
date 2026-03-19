@@ -34,7 +34,8 @@ public class QuantumDatabase
 
     //TODO: Add more stats for player information
     //------------------------------------------------------------------------------------------------------------------
-    private static void createTables() {
+    private static void createTables()
+    {
         String createPlayersTable = "CREATE TABLE IF NOT EXISTS Players (" +
                 "UUID TEXT PRIMARY KEY, " +
                 "Username VARCHAR(16) NOT NULL, " +
@@ -53,7 +54,8 @@ public class QuantumDatabase
     }
 
     //------------------------------------------------------------------------------------------------------------------
-    public static Connection getConnection() throws SQLException {
+    public static Connection getConnection() throws SQLException
+    {
         if (m_connection == null || m_connection.isClosed())
         {
             m_connection = DriverManager.getConnection(DATABASE_URL);
@@ -62,7 +64,8 @@ public class QuantumDatabase
     }
 
     //------------------------------------------------------------------------------------------------------------------
-    public static void closeConnection() {
+    public static void closeConnection()
+    {
         try
         {
             if (m_connection != null && !m_connection.isClosed())
