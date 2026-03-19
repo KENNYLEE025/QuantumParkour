@@ -1,6 +1,5 @@
 package com.quantumparkour.command.commands;
 
-import com.quantumparkour.QuantumParkour;
 import com.quantumparkour.command.QuantumCommand;
 import com.quantumparkour.database.QuantumDatabase;
 
@@ -16,6 +15,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.List;
 
+//----------------------------------------------------------------------------------------------------------------------
 public class QDebugCommand implements QuantumCommand
 {
 
@@ -77,9 +77,9 @@ public class QDebugCommand implements QuantumCommand
                 sendPlayerInfo(sender, uuid, resultSet);
             }
         }
-        catch (SQLException e)
+        catch (SQLException exception)
         {
-            e.printStackTrace();
+            exception.printStackTrace();
             sender.sendMessage("An error occurred while accessing the database.");
         }
     }

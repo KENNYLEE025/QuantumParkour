@@ -7,13 +7,15 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.Material;
+import org.jspecify.annotations.NonNull;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
 //----------------------------------------------------------------------------------------------------------------------
-public class PracManager implements Listener {
+public class PracManager implements Listener
+{
     private final Map<UUID, Location> m_pracCache = new HashMap<>();
     private final Map<UUID, Location> m_checkpointCache = new HashMap<>();
 
@@ -39,7 +41,7 @@ public class PracManager implements Listener {
     }
 
     //------------------------------------------------------------------------------------------------------------------
-    public Location getCheckpointLocation(Player player)
+    public Location getCheckpointLocation(@NonNull Player player)
     {
         return m_checkpointCache.get(player.getUniqueId());
     }
