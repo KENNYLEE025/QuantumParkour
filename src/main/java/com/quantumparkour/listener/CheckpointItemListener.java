@@ -32,15 +32,13 @@ public class CheckpointItemListener implements Listener
             }
 
             Location checkpointLocation = QuantumParkour.getPracManager().getCheckpointLocation(player);
-            if (checkpointLocation != null)
-            {
-                player.teleport(checkpointLocation);
-                player.sendMessage("Teleported to checkpoint!");
+            if (checkpointLocation == null)
+            {   player.sendMessage("No checkpoint set!");
+                return;
             }
-            else
-            {
-                player.sendMessage("No checkpoint set!");
-            }
+
+            player.teleport(checkpointLocation);
+            player.sendMessage("Teleported to checkpoint!");
         }
         else if (item.getType() == Material.DIAMOND && "§6Set Practice Checkpoint".equals(item.getItemMeta().getDisplayName()))
         {
@@ -50,9 +48,9 @@ public class CheckpointItemListener implements Listener
                 player.sendMessage("You are not in practice mode!");
                 return;
             }
+
             QuantumParkour.getPracManager().setCheckpointLocation(player, player.getLocation());
             player.sendMessage("Practice checkpoint set!");
         }
-
     }
 }
