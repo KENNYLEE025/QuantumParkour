@@ -5,9 +5,10 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerPortalEvent;
 import org.bukkit.event.player.PlayerTeleportEvent.TeleportCause;
 
+//----------------------------------------------------------------------------------------------------------------------
 public class PortalListener implements Listener
 {
-
+    //---------------------------------------------------------------------------------------------
     @EventHandler
     public void onPlayerPortal(PlayerPortalEvent event)
     {

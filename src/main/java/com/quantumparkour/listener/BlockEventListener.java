@@ -462,7 +462,8 @@ public class BlockEventListener implements Listener
     }
 
     //---------------------------------------------------------------------------------------------
-    private void restoreSavedBlocks(Map<Block, org.bukkit.block.BlockState> savedBlocks) {
+    private void restoreSavedBlocks(Map<Block, org.bukkit.block.BlockState> savedBlocks)
+    {
         if (savedBlocks.isEmpty()) return;
 
         new BukkitRunnable()

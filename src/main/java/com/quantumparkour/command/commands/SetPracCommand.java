@@ -10,30 +10,41 @@ import com.quantumparkour.command.QuantumCommand;
 import com.quantumparkour.config.QuantumConfigs;
 import com.quantumparkour.util.PlaceholderAPIWrapper;
 
-public class SetPracCommand implements QuantumCommand {
+//----------------------------------------------------------------------------------------------------------------------
+public class SetPracCommand implements QuantumCommand
+{
 
+    //---------------------------------------------------------------------------------------------
     @Override
-    public String getName() {
+    public String getName()
+    {
         return "setprac";
     }
 
+    //---------------------------------------------------------------------------------------------
     @Override
-    public String getDescription() {
+    public String getDescription()
+    {
         return "Sets a temporary practice checkpoint";
     }
 
+    //---------------------------------------------------------------------------------------------
     @Override
-    public String getUsage() {
+    public String getUsage()
+    {
         return "/setprac";
     }
 
+    //---------------------------------------------------------------------------------------------
     @Override
     public void execute(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (!(sender instanceof Player player)) {
+        if (!(sender instanceof Player player))
+        {
             sender.sendMessage("Only players can use this command.");
             return;
         }
-        if (!player.isOnGround()) {
+        if (!player.isOnGround())
+        {
             player.sendRichMessage(PlaceholderAPIWrapper.setPlaceholders(player, QuantumParkour.getConfigManager().getConfig(QuantumConfigs.MESSAGES).getString("must-be-on-ground")));
             return;
         }

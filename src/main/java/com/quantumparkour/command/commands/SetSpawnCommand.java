@@ -15,121 +15,156 @@ import com.quantumparkour.config.QuantumConfigs;
 
 import java.util.List;
 
-public class SetSpawnCommand implements QuantumCommand {
+//----------------------------------------------------------------------------------------------------------------------
+public class SetSpawnCommand implements QuantumCommand
+{
 
+    //---------------------------------------------------------------------------------------------
     @Override
-    public String getName() {
+    public String getName()
+    {
         return "setspawn";
     }
 
+    //---------------------------------------------------------------------------------------------
     @Override
-    public String getDescription() {
+    public String getDescription()
+    {
         return "Sets the server spawn";
     }
 
+    //---------------------------------------------------------------------------------------------
     @Override
-    public String getUsage() {
+    public String getUsage()
+    {
         return "/setspawn [<x> <y> <z>] [<yaw> <pitch>] [<world>]";
     }
 
+    //---------------------------------------------------------------------------------------------
     @Override
-    public String getPermission() {
+    public String getPermission()
+    {
         return "7osection.admin";
     }
 
+    //---------------------------------------------------------------------------------------------
     @Override
-    public void execute(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (!(sender instanceof Player player)) {
+    public void execute(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args)
+    {
+        if (!(sender instanceof Player player))
+        {
             sender.sendMessage("Only players can use this command.");
             return;
         }
+
         Location location = new Location(player.getWorld(), player.getX(), player.getY(), player.getZ(), player.getYaw(), player.getPitch());
-        if (args.length > 0 && args.length < 3 || args.length == 4) {
+        if (args.length > 0 && args.length < 3 || args.length == 4)
+        {
             sender.sendRichMessage("<red>Not enough arguments.");
             return;
         }
-        if (args.length != 0) {
+
+        if (args.length != 0)
+        {
             Double x = parse(args[0], player.getX());
             Double y = parse(args[1], player.getY());
             Double z = parse(args[2], player.getZ());
-            if (x == null) {
+            if (x == null)
+            {
                 player.sendRichMessage("<red>'" + args[0] + "' is not a valid argument.");
                 return;
             }
-            if (y == null) {
+            if (y == null)
+            {
                 player.sendRichMessage("<red>'" + args[1] + "' is not a valid argument.");
                 return;
             }
-            if (z == null) {
+            if (z == null)
+            {
                 player.sendRichMessage("<red>'" + args[2] + "' is not a valid argument.");
                 return;
             }
         }
-        if (args.length == 5) {
+        if (args.length == 5)
+        {
             Double yaw = parse(args[3], player.getYaw());
             Double pitch = parse(args[4], player.getPitch());
-            if (yaw == null) {
+            if (yaw == null)
+            {
                 player.sendRichMessage("<red>'" + args[3] + "' is not a valid yaw.");
                 return;
             }
-            if (pitch == null) {
+            if (pitch == null)
+            {
                 player.sendRichMessage("<red>'" + args[4] + "' is not a valid pitch.");
                 return;
             }
             location.setRotation(yaw.floatValue(), pitch.floatValue());
         }
-        if (args.length == 6) {
+        if (args.length == 6)
+        {
             World world = QuantumParkour.getPlugin().getServer().getWorld(args[5]);
-            if (world == null) {
+            if (world == null)
+            {
                 player.sendRichMessage("<red>'" + args[5] + "' is not a valid world.");
                 return;
             }
             location.setWorld(world);
         }
+
         QuantumParkour.getConfigManager().getConfig(QuantumConfigs.SPAWN).set("spawn", location);
         QuantumParkour.getConfigManager().saveConfig(QuantumConfigs.SPAWN);
         sender.sendRichMessage("Spawn has been set to " + location.getX() + ", " + location.getY() + ", " + location.getZ() + " in: " + location.getWorld().getName());
     }
 
+    //---------------------------------------------------------------------------------------------
     @Override
     public @Nullable List<String> getTabCompletions(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
         List<List<String>> suggestions = List.of(
-                List.of("~", "~ ~", "~ ~ ~"),
-                List.of("~", "~ ~"),
-                List.of("~")
+                List.of("~", "~ ~", "~ ~ ~"),   // Coords
+                List.of("~", "~ ~"),            // Facing
+                List.of("~")                // World
         );
 
-        if (args.length >= 1 && args.length <= 5) {
+        if (args.length >= 1 && args.length <= 5)
+        {
             return suggestions.get(args.length - (args.length > 3 ? 3 : 1));
         }
 
-        if (args.length == 6) {
+        if (args.length == 6)
+        {
             return QuantumParkour.getPlugin().getServer().getWorlds().stream().map(WorldInfo::getName).toList();
         }
 
         return null;
     }
 
-    private Double parse(String arg, double d) {
-        if (arg == null || arg.isEmpty() || arg.contains("e") || arg.contains("E")) {
+    //---------------------------------------------------------------------------------------------
+    private Double parse(String input, double value)
+    {
+        if (input == null || input.isEmpty() || input.contains("e") || input.contains("E"))
+        {
             return null;
         }
 
-        boolean isRelative = arg.startsWith("~");
-
-        if (isRelative && arg.length() == 1) {
-            return d;
+        boolean isRelative = input.startsWith("~");
+        if (isRelative && input.length() == 1)
+        {
+            return value;
         }
 
-        double result;
-        try {
-            result = Double.parseDouble(isRelative ? arg.substring(1) : arg);
-        } catch (NumberFormatException e) {
+        double result = 0;
+        try
+        {
+            result = Double.parseDouble(isRelative ? input.substring(1) : input);
+        }
+        catch (NumberFormatException exception)
+        {
             return null;
         }
 
         if (isRelative) {
-            result += d;
+            result += value;
         }
 
         return result;

@@ -10,30 +10,43 @@ import com.quantumparkour.QuantumParkour;
 import com.quantumparkour.command.QuantumCommand;
 import com.quantumparkour.config.QuantumConfigs;
 
-public class SpawnCommand implements QuantumCommand {
+//----------------------------------------------------------------------------------------------------------------------
+public class SpawnCommand implements QuantumCommand
+{
+    //---------------------------------------------------------------------------------------------
     @Override
-    public String getName() {
+    public String getName()
+    {
         return "spawn";
     }
 
+    //---------------------------------------------------------------------------------------------
     @Override
-    public String getDescription() {
+    public String getDescription()
+    {
         return "Teleports you to spawn";
     }
 
+    //---------------------------------------------------------------------------------------------
     @Override
-    public String getUsage() {
+    public String getUsage()
+    {
         return "/spawn";
     }
 
+    //---------------------------------------------------------------------------------------------
     @Override
-    public void execute(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args) {
-        if (!(sender instanceof Player player)) {
+    public void execute(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args)
+    {
+        if (!(sender instanceof Player player))
+        {
             sender.sendMessage("Only players can use this command.");
             return;
         }
+
         Location location = QuantumParkour.getConfigManager().getConfig(QuantumConfigs.SPAWN).getLocation("spawn");
-        if (location != null) {
+        if (location != null)
+        {
             player.teleport(location);
             return;
         }
