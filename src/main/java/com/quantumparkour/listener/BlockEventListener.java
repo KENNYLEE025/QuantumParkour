@@ -171,16 +171,15 @@ public class BlockEventListener implements Listener
                         || mat == Material.TRIPWIRE
                         || mat == Material.TRIPWIRE_HOOK
                         || mat == Material.DAYLIGHT_DETECTOR
-                        || mat == Material.TARGET));
+                        || mat == Material.TARGET
+        ));
 
         m_fallbackCategories.put(Category.FRAGILE, collectMaterials(mat ->
                 mat.name().endsWith("_SIGN")
                         || mat.name().endsWith("_WALL_SIGN")
-                        || mat == Material.TORCH
-                        || mat == Material.WALL_TORCH
-                        || mat == Material.SOUL_TORCH
-                        || mat == Material.SOUL_WALL_TORCH
-                        || mat == Material.REDSTONE_TORCH
+                        || mat.name().endsWith("TORCH")
+                        || mat.name().endsWith("_AMETHYST_BUD")
+                        || mat.name().endsWith("_VINES")
                         || mat == Material.REDSTONE_WALL_TORCH
                         || mat == Material.LADDER
                         || mat == Material.SCAFFOLDING
@@ -192,33 +191,57 @@ public class BlockEventListener implements Listener
                         || mat == Material.SNOW
                         || mat == Material.BAMBOO
                         || mat == Material.BELL
-                        || mat == Material.TWISTING_VINES
-                        || mat == Material.WEEPING_VINES
                         || mat == Material.COCOA
                         || mat == Material.ANVIL
+                        || mat == Material.DAMAGED_ANVIL
+                        || mat == Material.CHIPPED_ANVIL
                         || mat == Material.DRAGON_EGG
                         || mat == Material.NETHER_PORTAL
-                        || mat == Material.END_PORTAL));
-
-        m_fallbackCategories.put(Category.BANNER, collectMaterials( mat->
-                mat.name().endsWith("_BANNER") || mat.name().endsWith("_WALL_BANNER")
-                        || mat == Material.RED_BANNER			|| mat == Material.RED_WALL_BANNER
-                        || mat == Material.ORANGE_BANNER		|| mat == Material.ORANGE_WALL_BANNER
-                        || mat == Material.YELLOW_BANNER		|| mat == Material.YELLOW_WALL_BANNER
-                        || mat == Material.LIME_BANNER			|| mat == Material.LIME_WALL_BANNER
-                        || mat == Material.GREEN_BANNER			|| mat == Material.GREEN_WALL_BANNER
-                        || mat == Material.LIGHT_BLUE_BANNER	|| mat == Material.LIGHT_BLUE_WALL_BANNER
-                        || mat == Material.BLUE_BANNER			|| mat == Material.BLUE_WALL_BANNER
-                        || mat == Material.PURPLE_BANNER		|| mat == Material.PURPLE_WALL_BANNER
-                        || mat == Material.PINK_BANNER			|| mat == Material.PINK_WALL_BANNER
-                        || mat == Material.MAGENTA_BANNER		|| mat == Material.MAGENTA_WALL_BANNER
-                        || mat == Material.WHITE_BANNER			|| mat == Material.WHITE_WALL_BANNER
-                        || mat == Material.LIGHT_GRAY_BANNER	|| mat == Material.LIGHT_GRAY_WALL_BANNER
-                        || mat == Material.GRAY_BANNER			|| mat == Material.GRAY_WALL_BANNER
-                        || mat == Material.BROWN_BANNER			|| mat == Material.BROWN_WALL_BANNER
-                        || mat == Material.BLACK_BANNER			|| mat == Material.BLACK_WALL_BANNER
-                        || mat == Material.CYAN_BANNER			|| mat == Material.CYAN_WALL_BANNER
+                        || mat == Material.END_PORTAL
+                        || mat == Material.AMETHYST_CLUSTER
+                        || mat == Material.END_GATEWAY
+                        || mat == Material.CHORUS_FLOWER
+                        || mat == Material.CHORUS_PLANT
         ));
+
+        m_fallbackCategories.put(Category.FLOWER, collectMaterials(mat ->
+                mat.name().endsWith("_SAPLING")
+                        || mat.name().endsWith("_FUNGUS")
+                        || mat.name().endsWith("_MUSHROOM")
+                        || mat.name().endsWith("_TULIP")
+                        || mat.name().endsWith("_ROOTS")
+                        || mat.name().endsWith("_EYEBLOSSOM")
+                        || mat.name().contains("DRIPLEAF")
+                        || mat == Material.AZALEA
+                        || mat == Material.SHORT_GRASS
+                        || mat == Material.FERN
+                        || mat == Material.DEAD_BUSH
+                        || mat == Material.DANDELION
+                        || mat == Material.POPPY
+                        || mat == Material.BLUE_ORCHID
+                        || mat == Material.AZURE_BLUET
+                        || mat == Material.ALLIUM
+                        || mat == Material.OXEYE_DAISY
+                        || mat == Material.CORNFLOWER
+                        || mat == Material.LILY_OF_THE_VALLEY
+                        || mat == Material.TORCHFLOWER
+                        || mat == Material.WITHER_ROSE
+                        || mat == Material.PINK_PETALS
+                        || mat == Material.SPORE_BLOSSOM
+                        || mat == Material.SUGAR_CANE
+                        || mat == Material.TALL_GRASS
+                        || mat == Material.LARGE_FERN
+                        || mat == Material.SUNFLOWER
+                        || mat == Material.LILAC
+                        || mat == Material.ROSE_BUSH
+                        || mat == Material.PEONY
+                        || mat == Material.PITCHER_PLANT
+                        || mat == Material.GLOW_LICHEN
+                        || mat == Material.HANGING_ROOTS
+                        || mat == Material.FROGSPAWN
+                ));
+
+        m_fallbackCategories.put(Category.BANNER, collectMaterials( mat-> mat.name().endsWith("_BANNER") || mat.name().endsWith("_WALL_BANNER") ));
     }
 
     //---------------------------------------------------------------------------------------------
@@ -375,6 +398,12 @@ public class BlockEventListener implements Listener
         {
             event.setCancelled(true);
         }
+    }
+
+    @EventHandler
+    public void onBlockGrow(BlockGrowEvent event)
+    {
+        Material type = event.getBlock().getBlockData().getMaterial();
     }
 
     //---------------------------------------------------------------------------------------------
