@@ -53,22 +53,27 @@ public class PracCommand implements QuantumCommand
             return;
         }
 
-        SetPracticeLocation(player);
-        AddPracticeItemsToInventory(player);
+        boolean validatePracticeLocation = SetPracticeLocation(player);
+
+        if (validatePracticeLocation)
+        {
+            AddPracticeItemsToInventory(player);
+        }
     }
 
     //---------------------------------------------------------------------------------------------
-    private void SetPracticeLocation(Player player)
+    private boolean SetPracticeLocation(Player player)
     {
         Location pracLocation = QuantumParkour.getPracManager().getPracLocation(player);
         if (pracLocation != null)
         {
             player.sendRichMessage(PlaceholderAPIWrapper.setPlaceholders(player, QuantumParkour.getConfigManager().getConfig(QuantumConfigs.MESSAGES).getString("prac-already-enabled")));
-            return;
+            return false;
         }
         QuantumParkour.getPracManager().setPracLocation(player, player.getLocation());
         QuantumParkour.getPracManager().setCheckpointLocation(player, player.getLocation()); // Ensure checkpoint is set
         player.sendRichMessage(PlaceholderAPIWrapper.setPlaceholders(player, QuantumParkour.getConfigManager().getConfig(QuantumConfigs.MESSAGES).getString("prac-enabled")));
+        return true;
     }
 
     //---------------------------------------------------------------------------------------------

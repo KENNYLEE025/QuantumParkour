@@ -91,6 +91,7 @@ public class QDebugCommand implements QuantumCommand
         return List.of();
     }
 
+    //------------------------------------------------------------------------------------------------------------------
     private void sendPlayerInfo(CommandSender sender, String uuid, ResultSet resultSet) throws SQLException
     {
         String username = resultSet.getString("Username");

@@ -42,7 +42,9 @@ public class BlockEventListener implements Listener
         REDSTONE,
         GRAVITY,
         CORAL,
-        BED
+        BED,
+        FLOWER,
+        BANNER
     }
 
     //---------------------------------------------------------------------------------------------
@@ -52,7 +54,9 @@ public class BlockEventListener implements Listener
             Category.FLUIDS,
             Category.FRAGILE,
             Category.GRAVITY,
-            Category.REDSTONE
+            Category.REDSTONE,
+            Category.FLOWER,
+            Category.BANNER
     );
 
     //---------------------------------------------------------------------------------------------
@@ -195,6 +199,26 @@ public class BlockEventListener implements Listener
                         || mat == Material.DRAGON_EGG
                         || mat == Material.NETHER_PORTAL
                         || mat == Material.END_PORTAL));
+
+        m_fallbackCategories.put(Category.BANNER, collectMaterials( mat->
+                mat.name().endsWith("_BANNER") || mat.name().endsWith("_WALL_BANNER")
+                        || mat == Material.RED_BANNER			|| mat == Material.RED_WALL_BANNER
+                        || mat == Material.ORANGE_BANNER		|| mat == Material.ORANGE_WALL_BANNER
+                        || mat == Material.YELLOW_BANNER		|| mat == Material.YELLOW_WALL_BANNER
+                        || mat == Material.LIME_BANNER			|| mat == Material.LIME_WALL_BANNER
+                        || mat == Material.GREEN_BANNER			|| mat == Material.GREEN_WALL_BANNER
+                        || mat == Material.LIGHT_BLUE_BANNER	|| mat == Material.LIGHT_BLUE_WALL_BANNER
+                        || mat == Material.BLUE_BANNER			|| mat == Material.BLUE_WALL_BANNER
+                        || mat == Material.PURPLE_BANNER		|| mat == Material.PURPLE_WALL_BANNER
+                        || mat == Material.PINK_BANNER			|| mat == Material.PINK_WALL_BANNER
+                        || mat == Material.MAGENTA_BANNER		|| mat == Material.MAGENTA_WALL_BANNER
+                        || mat == Material.WHITE_BANNER			|| mat == Material.WHITE_WALL_BANNER
+                        || mat == Material.LIGHT_GRAY_BANNER	|| mat == Material.LIGHT_GRAY_WALL_BANNER
+                        || mat == Material.GRAY_BANNER			|| mat == Material.GRAY_WALL_BANNER
+                        || mat == Material.BROWN_BANNER			|| mat == Material.BROWN_WALL_BANNER
+                        || mat == Material.BLACK_BANNER			|| mat == Material.BLACK_WALL_BANNER
+                        || mat == Material.CYAN_BANNER			|| mat == Material.CYAN_WALL_BANNER
+        ));
     }
 
     //---------------------------------------------------------------------------------------------
@@ -524,6 +548,18 @@ public class BlockEventListener implements Listener
     private boolean isGravityBlock(Material type)
     {
         return isInCategory(Category.GRAVITY, type);
+    }
+
+    //---------------------------------------------------------------------------------------------
+    private boolean isBannerBlock(Material type)
+    {
+        return isInCategory(Category.BANNER, type);
+    }
+
+    //---------------------------------------------------------------------------------------------
+    private boolean isFlower(Material type)
+    {
+        return isInCategory(Category.FLOWER, type);
     }
 
     //---------------------------------------------------------------------------------------------
