@@ -13,6 +13,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 import org.bukkit.event.block.*;
+import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -400,10 +401,21 @@ public class BlockEventListener implements Listener
         }
     }
 
-    @EventHandler
-    public void onBlockGrow(BlockGrowEvent event)
+    //---------------------------------------------------------------------------------------------
+    @EventHandler(ignoreCancelled = true)
+    public void onEntityChangeBlock(EntityChangeBlockEvent event)
     {
-        Material type = event.getBlock().getBlockData().getMaterial();
+        Block block = event.getBlock();
+        Material type = block.getType();
+
+        if (type == Material.FARMLAND)
+        {
+            event.setCancelled(true);
+        }
+        if (type == Material.TURTLE_EGG)
+        {
+            event.setCancelled(true);
+        }
     }
 
     //---------------------------------------------------------------------------------------------
@@ -603,5 +615,11 @@ public class BlockEventListener implements Listener
             }
         }
         return false;
+    }
+
+    //---------------------------------------------------------------------------------------------
+    private boolean isPointedDripstone(Material type)
+    {
+        return type == Material.POINTED_DRIPSTONE;
     }
 }
