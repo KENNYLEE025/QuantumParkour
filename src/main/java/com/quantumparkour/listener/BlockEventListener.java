@@ -307,7 +307,7 @@ public class BlockEventListener implements Listener
     }
 
     //---------------------------------------------------------------------------------------------
-    @EventHandler   //(ignoreCancelled = true)
+    @EventHandler(ignoreCancelled = true)
     public void onBlockBreak(BlockBreakEvent event)
     {
         Block block = event.getBlock();
@@ -428,20 +428,10 @@ public class BlockEventListener implements Listener
         {
             Block adjacentBlock = block.getRelative(blockFace);
             Material adjacentType = adjacentBlock.getType();
-            if (!isUnstableBlock(adjacentBlock))
-            {
-                continue;
-            }
 
-            if (isRedstoneComponent(adjacentType))
-            {
-                continue;
-            }
-
-            if (isGravityBlock(type) && isGravityBlock(adjacentType))
-            {
-                continue;
-            }
+            if (!isUnstableBlock(adjacentBlock))                        continue;
+            if (isRedstoneComponent(adjacentType))                      continue;
+            if (isGravityBlock(type) && isGravityBlock(adjacentType))   continue;
 
             return true;
         }
