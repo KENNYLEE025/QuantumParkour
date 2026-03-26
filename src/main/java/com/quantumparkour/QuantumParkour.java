@@ -72,7 +72,10 @@ public final class QuantumParkour extends JavaPlugin
                 SpawnCommand::new,
                 UnpracCommand::new,
                 //QwobitsCommand::new, // Register the new command here
-                QDebugCommand::new // Register the QDebugCommand here
+                QDebugCommand::new, // Register the QDebugCommand here
+
+                // Renatus + QuantumPK commands
+                FriendCMD::new
         );
         configManager.registerConfigs(QuantumConfigs.values());
         levelManager.loadLevels(QuantumConfigs.LEVELS);

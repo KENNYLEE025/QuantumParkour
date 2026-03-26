@@ -1,5 +1,6 @@
 package com.quantumparkour.listener;
 
+import io.papermc.paper.event.player.PlayerOpenSignEvent;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Material;
@@ -13,6 +14,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 
 import org.bukkit.event.block.*;
+import org.bukkit.event.entity.EntityBreakDoorEvent;
 import org.bukkit.event.entity.EntityChangeBlockEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -143,15 +145,11 @@ public class BlockEventListener implements Listener
     {
         m_fallbackCategories.clear();
 
-        m_fallbackCategories.put(Category.FLUIDS, EnumSet.of(
-                Material.WATER,
-                Material.LAVA,
-                Material.BUBBLE_COLUMN
-        ));
-
+        m_fallbackCategories.put(Category.FLUIDS, EnumSet.of(Material.WATER, Material.LAVA, Material.BUBBLE_COLUMN));
         m_fallbackCategories.put(Category.BED, collectMaterials(mat -> mat.name().endsWith("_BED")));
         m_fallbackCategories.put(Category.CORAL, collectMaterials(mat -> mat.name().contains("CORAL")));
         m_fallbackCategories.put(Category.GRAVITY, collectMaterials(Material::hasGravity));
+        m_fallbackCategories.put(Category.BANNER, collectMaterials( mat-> mat.name().endsWith("_BANNER") || mat.name().endsWith("_WALL_BANNER")));
 
         m_fallbackCategories.put(Category.REDSTONE, collectMaterials(mat ->
                 mat.name().contains("REDSTONE")
@@ -241,8 +239,6 @@ public class BlockEventListener implements Listener
                         || mat == Material.HANGING_ROOTS
                         || mat == Material.FROGSPAWN
                 ));
-
-        m_fallbackCategories.put(Category.BANNER, collectMaterials( mat-> mat.name().endsWith("_BANNER") || mat.name().endsWith("_WALL_BANNER") ));
     }
 
     //---------------------------------------------------------------------------------------------
@@ -419,6 +415,13 @@ public class BlockEventListener implements Listener
     }
 
     //---------------------------------------------------------------------------------------------
+    @EventHandler(ignoreCancelled = true)
+    public void OnEntityBreakDoors(EntityBreakDoorEvent event)
+    {
+        event.setCancelled(true);
+    }
+
+    //---------------------------------------------------------------------------------------------
     // Helper functions
     private boolean hasBlockedPhysicsNeighbor(Block block)
     {
@@ -437,7 +440,7 @@ public class BlockEventListener implements Listener
         }
         return false;
     }
-
+    
     //---------------------------------------------------------------------------------------------
     private Player findNearbyCreativePlayer(Block block, double radius)
     {
