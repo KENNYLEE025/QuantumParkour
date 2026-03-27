@@ -20,7 +20,7 @@ dependencies {
     paperweight.paperDevBundle '1.21.4-R0.1-SNAPSHOT'
     compileOnly 'me.clip:placeholderapi:2.11.6'
     implementation 'org.jetbrains:annotations:24.1.0'
-    implementation 'org.xerial:sqlite-jdbc:3.36.0.3'
+    implementation 'com.zaxxer:HikariCP:7.0.2'
 }
 
 tasks {

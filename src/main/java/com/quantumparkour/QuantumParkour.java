@@ -32,15 +32,28 @@ public final class QuantumParkour extends JavaPlugin
     private static PracManager pracManager;
     //private static QwobitManager qwobitManager;
 
+    //------------------------------------------------------------------------------------------------------------------
+    public static QuantumParkour getPlugin() { return instance; }
+    public static CommandManager getCommandManager() { return commandManager; }
+    public static ConfigManager getConfigManager() { return configManager; }
+    public static LevelManager getLevelManager() { return levelManager; }
+    public static PlayerManager getPlayerManager() { return playerManager; }
+    public static PracManager getPracManager() { return pracManager; }
+    //public static QwobitManager getQwobitManager() { return qwobitManager; }
+
+    //------------------------------------------------------------------------------------------------------------------
     @Override
     public void onLoad()
     {
         ConfigurationSerialization.registerClass(Level.class);
     }
 
+    //------------------------------------------------------------------------------------------------------------------
     @Override
     public void onEnable()
     {
+        QuantumDatabase.initialize();
+
         PlaceholderAPIWrapper.init();
         getConfig().options().copyDefaults(true);
         saveDefaultConfig();
@@ -52,7 +65,8 @@ public final class QuantumParkour extends JavaPlugin
         pracManager = new PracManager();
 
         //qwobitManager = new QwobitManager();
-        QuantumDatabase.initialize(); // Initialize the database
+
+
         registerEvents(
                 () -> new BlockEventListener(this),
                 CheckpointItemListener::new,
@@ -63,6 +77,7 @@ public final class QuantumParkour extends JavaPlugin
                 PortalListener::new
         );
         commandManager.registerCommands(
+                // QuantumPK only commands
                 CheckpointCommand::new,
                 ConfirmCommand::new,
                 LevelCommand::new,
@@ -81,17 +96,17 @@ public final class QuantumParkour extends JavaPlugin
         levelManager.loadLevels(QuantumConfigs.LEVELS);
     }
 
+    //------------------------------------------------------------------------------------------------------------------
     @SafeVarargs
     private void registerEvents(Supplier<Listener>... suppliers)
     {
         List.of(suppliers).forEach(listenerSupplier -> getServer().getPluginManager().registerEvents(listenerSupplier.get(), this));
     }
 
-    public static QuantumParkour getPlugin() { return instance; }
-    public static CommandManager getCommandManager() { return commandManager; }
-    public static ConfigManager getConfigManager() { return configManager; }
-    public static LevelManager getLevelManager() { return levelManager; }
-    public static PlayerManager getPlayerManager() { return playerManager; }
-    public static PracManager getPracManager() { return pracManager; }
-    //public static QwobitManager getQwobitManager() { return qwobitManager; }
+    //------------------------------------------------------------------------------------------------------------------
+    @Override
+    public void onDisable()
+    {
+        QuantumDatabase.close();
+    }
 }

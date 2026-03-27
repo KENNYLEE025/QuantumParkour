@@ -60,6 +60,7 @@ public class QDebugCommand implements QuantumCommand
 
         String uuid = target.getUniqueId().toString();
 
+
         // Get connection and statement of stats for player
         try (Connection connection = QuantumDatabase.getConnection();
              PreparedStatement statement = connection.prepareStatement("SELECT * FROM Players WHERE UUID = ?"))
@@ -82,6 +83,7 @@ public class QDebugCommand implements QuantumCommand
             exception.printStackTrace();
             sender.sendMessage("An error occurred while accessing the database.");
         }
+
     }
 
     //------------------------------------------------------------------------------------------------------------------

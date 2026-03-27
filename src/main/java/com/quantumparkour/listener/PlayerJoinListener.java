@@ -24,6 +24,7 @@ public class PlayerJoinListener implements Listener
         Player player = event.getPlayer();
         String uuid = player.getUniqueId().toString();
         String username = player.getName();
+
         syncPlayerData(uuid, username);
 
         QuantumParkour.getPlayerManager().add(player);
@@ -65,6 +66,8 @@ public class PlayerJoinListener implements Listener
             exception.printStackTrace();
         }
     }
+
+
 
     //---------------------------------------------------------------------------------------------
     private void insertPlayer(Connection connection, String query, String uuid, String username) throws SQLException
