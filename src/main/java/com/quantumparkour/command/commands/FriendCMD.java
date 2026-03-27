@@ -1,6 +1,7 @@
 package com.quantumparkour.command.commands;
 
 import com.quantumparkour.command.QuantumCommand;
+import com.quantumparkour.database.FriendDBManager;
 import com.quantumparkour.util.MessageColorUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
@@ -11,7 +12,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class FriendCMD implements QuantumCommand
 {
-    private final String[] SUB_ARGS = {"help", "add", "accept", "reject", "block"};
+    private final String[] SUB_ARGS = {"help", "add", "accept", "reject", "block", "remove"};
 
     //------------------------------------------------------------------------------------------------------------
     @Override
@@ -30,6 +31,13 @@ public class FriendCMD implements QuantumCommand
         }
 
         Player player = (Player)sender;
+
+        if (args.length == 0)
+        {
+            showFriendCommandUsage(player);
+            return;
+        }
+
 
         if (args[0].equalsIgnoreCase("help"))
         {
@@ -50,6 +58,12 @@ public class FriendCMD implements QuantumCommand
         }
 
         Player target = Bukkit.getPlayer(args[1]);
+
+        if (player.getName().equals(target.getName()))
+        {
+            showSameUserFriendRequest(player);
+            return;
+        }
 
         if (!isTargetValid(target))
         {
@@ -73,9 +87,13 @@ public class FriendCMD implements QuantumCommand
         {
             onFriendBlock(player, target);
         }
+        else if (args[0].equalsIgnoreCase("remove"))
+        {
+            onFriendRemove(player, target);
+        }
         else
         {
-            showFriendCommandUsage(player);
+            showIncompleteCommand(player);
         }
     }
 
@@ -101,28 +119,50 @@ public class FriendCMD implements QuantumCommand
     //------------------------------------------------------------------------------------------------------------
     private void onFriendAccept(Player player, Player target)
     {
-        player.sendMessage(MessageColorUtils.translate("&2You are now friends with &a" + target));
-        target.sendMessage(MessageColorUtils.translate("&2You are now friends with &a" + target));
+        FriendDBManager.acceptFriendRequest(player.getUniqueId(), target.getUniqueId());
+
+        player.sendMessage(MessageColorUtils.translate("&2You are now friends with &a" + target.getName()));
+        target.sendMessage(MessageColorUtils.translate("&2You are now friends with &a" + target.getName()));
     }
 
     //------------------------------------------------------------------------------------------------------------
     private void onFriendReject(Player player, Player target)
     {
-        player.sendMessage(MessageColorUtils.translate("&2You have rejected a friend requests from &a" + target));
-        target.sendMessage(MessageColorUtils.translate("&2Your friend request to &a" + player + "&2has been rejected"));
+        FriendDBManager.rejectFriendRequest(player.getUniqueId(), target.getUniqueId());
+
+        player.sendMessage(MessageColorUtils.translate("&2You have rejected a friend requests from &a" + target.getName()));
+        target.sendMessage(MessageColorUtils.translate("&2Your friend request to &a" + player.getName() + "&2has been rejected"));
     }
 
     //------------------------------------------------------------------------------------------------------------
     private void onFriendAdd(Player player, Player target)
     {
-        player.sendMessage(MessageColorUtils.translate("&2Friend request sent to &a" + target));
-        target.sendMessage(MessageColorUtils.translate("&a" + player + " &2has sent you a friend request"));
+        FriendDBManager.sendFriendRequest(player.getUniqueId(), target.getUniqueId());
+
+        player.sendMessage(MessageColorUtils.translate("&2Friend request sent to &a" + target.getName()));
+        target.sendMessage(MessageColorUtils.translate("&a" + player.getName() + " &2has sent you a friend request"));
     }
 
     //------------------------------------------------------------------------------------------------------------
     private void onFriendBlock(Player player, Player target)
     {
-        player.sendMessage(MessageColorUtils.translate("&a" + target + " &2has been blocked"));
+        FriendDBManager.blockPlayer(player.getUniqueId(), target.getUniqueId());
+
+        player.sendMessage(MessageColorUtils.translate("&a" + target.getName() + " &2has been blocked"));
+    }
+
+    //------------------------------------------------------------------------------------------------------------
+    private void onFriendRemove(Player player, Player target)
+    {
+        FriendDBManager.removeFriend(player.getUniqueId(), target.getUniqueId());
+
+        player.sendMessage(MessageColorUtils.translate("&2You have removed &a" + target.getName() + " &2from your friends list"));
+    }
+
+    //------------------------------------------------------------------------------------------------------------
+    private void showSameUserFriendRequest(Player player)
+    {
+        player.sendMessage((MessageColorUtils.translate("&2You cannot add yourself as a friend")));
     }
 
     //------------------------------------------------------------------------------------------------------------
@@ -148,6 +188,7 @@ public class FriendCMD implements QuantumCommand
         player.sendMessage(MessageColorUtils.translate("&cThat command is not valid. Type /friend help for the list of commands for friends."));
     }
 
+    //------------------------------------------------------------------------------------------------------------
     private void showIncompleteCommand(Player player)
     {
         player.sendMessage(MessageColorUtils.translate("&cThat command is in progress. Please try again later"));
