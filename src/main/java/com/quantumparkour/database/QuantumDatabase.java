@@ -114,6 +114,7 @@ public class QuantumDatabase
             """;
     }
 
+    //---------------------------------------------------------------------------------------------
     private static String getCreateFriendRequestTableQuery()
     {
         return """
