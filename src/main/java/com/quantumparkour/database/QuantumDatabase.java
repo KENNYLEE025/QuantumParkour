@@ -131,6 +131,24 @@ public class QuantumDatabase
     }
 
     //---------------------------------------------------------------------------------------------
+    private static String getCreateLevelsTableQuery()
+    {
+        return """
+        CREATE TABLE IF NOT EXISTS Levels (
+            LevelName VARCHAR(50) UNIQUE NOT NULL,
+            DisplayName TEXT,
+            QuobitsReward INT NOT NULL,
+            StartLocation TEXT NOT NULL,
+            MaxCompletions INT NOT NULL,
+            AnnounceCompletions BOOLEAN NOT NULL,
+            LevelType TEXT NOT NULL,
+            Practiceable BOOLEAN NOT NULL,
+            PRIMARY KEY (LevelName)
+        )
+        """;
+    }
+
+    //---------------------------------------------------------------------------------------------
     private static void executeStatements(String... sqlStatements)
     {
         try (Connection connection = getConnection();

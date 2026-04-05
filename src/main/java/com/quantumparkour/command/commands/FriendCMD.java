@@ -81,19 +81,24 @@ public class FriendCMD implements QuantumCommand
         if (args[0].equalsIgnoreCase("accept"))
         {
             onFriendAccept(player, target);
-        } else if (args[0].equalsIgnoreCase("reject"))
+        }
+        else if (args[0].equalsIgnoreCase("reject"))
         {
             onFriendReject(player, target);
-        } else if (args[0].equalsIgnoreCase("add"))
+        }
+        else if (args[0].equalsIgnoreCase("add"))
         {
             onFriendAdd(player, target);
-        } else if (args[0].equalsIgnoreCase("block"))
+        }
+        else if (args[0].equalsIgnoreCase("block"))
         {
             onFriendBlock(player, target);
-        } else if (args[0].equalsIgnoreCase("remove"))
+        }
+        else if (args[0].equalsIgnoreCase("remove"))
         {
             onFriendRemove(player, target);
-        } else
+        }
+        else
         {
             showIncompleteCommand(player);
         }

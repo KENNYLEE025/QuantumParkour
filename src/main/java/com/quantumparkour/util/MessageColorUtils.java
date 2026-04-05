@@ -16,26 +16,26 @@ public class MessageColorUtils
     {
         if (colorName == null) return null;
 
-        switch (colorName.toLowerCase())
+        return switch (colorName.toLowerCase())
         {
-            case "black":   return Color.BLACK;
-            case "white":   return Color.WHITE;
-            case "yellow":  return Color.YELLOW;
-            case "navy":    return Color.NAVY;
-            case "blue":    return Color.BLUE;
-            case "fuchsia": return Color.FUCHSIA;
-            case "aqua":    return Color.AQUA;
-            case "olive":   return Color.OLIVE;
-            case "maroon":  return Color.MAROON;
-            case "green":   return Color.GREEN;
-            case "lime":    return Color.LIME;
-            case "gray":    return Color.GRAY;
-            case "orange":  return Color.ORANGE;
-            case "red":     return Color.RED;
-            case "silver":  return Color.SILVER;
-            case "teal":    return Color.TEAL;
-            case "purple":  return Color.PURPLE;
-            default:        return null;
-        }
+            case "black" -> Color.BLACK;
+            case "white" -> Color.WHITE;
+            case "yellow" -> Color.YELLOW;
+            case "navy" -> Color.NAVY;
+            case "blue" -> Color.BLUE;
+            case "fuchsia" -> Color.FUCHSIA;    // Magenta
+            case "aqua" -> Color.AQUA;
+            case "olive" -> Color.OLIVE;        // Gold
+            case "maroon" -> Color.MAROON;      // Dark Red
+            case "green" -> Color.GREEN;
+            case "lime" -> Color.LIME;
+            case "gray" -> Color.GRAY;
+            case "orange" -> Color.ORANGE;
+            case "red" -> Color.RED;
+            case "silver" -> Color.SILVER;      // Light gray
+            case "teal" -> Color.TEAL;
+            case "purple" -> Color.PURPLE;
+            default -> null;
+        };
     }
 }
