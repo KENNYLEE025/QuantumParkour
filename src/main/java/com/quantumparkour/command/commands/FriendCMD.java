@@ -16,7 +16,7 @@ import java.util.UUID;
 
 public class FriendCMD implements QuantumCommand
 {
-    private final String[] SUB_ARGS = {"help", "add", "accept", "reject", "block", "remove", "list"};
+    private final String[] SUB_ARGS = {"help", "add", "accept", "reject", "block", "unblock", "remove", "list"};
 
     //------------------------------------------------------------------------------------------------------------
     @Override
@@ -97,6 +97,10 @@ public class FriendCMD implements QuantumCommand
         else if (args[0].equalsIgnoreCase("remove"))
         {
             onFriendRemove(player, target);
+        }
+        else if (args[0].equalsIgnoreCase("unblock"))
+        {
+            onRfriendUnblock(player, target);
         }
         else
         {
@@ -229,6 +233,19 @@ public class FriendCMD implements QuantumCommand
         target.sendMessage(MessageColorUtils.translate("&a" + player.getName() + " &2has sent you a friend request"));
     }
 
+    private void onRfriendUnblock(Player player, Player target)
+    {
+        boolean isFriendUnblockSuccessful = FriendDBManager.unblockPlayer(player.getUniqueId(), target.getUniqueId());
+        if (!isFriendUnblockSuccessful)
+        {
+            player.sendMessage("&cFailed to unblock player: &a" + target.getName());
+            return;
+        }
+
+        player.sendMessage(MessageColorUtils.translate("&2You have unblocked &a" + target.getName()));
+
+    }
+
     //------------------------------------------------------------------------------------------------------------
     private void onFriendBlock(Player player, Player target)
     {
@@ -270,6 +287,7 @@ public class FriendCMD implements QuantumCommand
         player.sendMessage(MessageColorUtils.translate("&a/friend reject <username>. "));
         player.sendMessage(MessageColorUtils.translate("&a/friend remove <username>. "));
         player.sendMessage(MessageColorUtils.translate("&a/friend block <username>. "));
+        player.sendMessage(MessageColorUtils.translate("&a/friend unblock <username>. "));
     }
 
     //------------------------------------------------------------------------------------------------------------
