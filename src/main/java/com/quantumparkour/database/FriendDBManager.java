@@ -12,7 +12,7 @@ import java.util.UUID;
 public final class FriendDBManager
 {
     //------------------------------------------------------------------------------------------------------------------
-    private static final long FRIEND_REQUEST_DURATION_MILLISECONDS = 60_000L;
+    private static final long FRIEND_REQUEST_DURATION_MILLISECONDS = 10_000L;
 
     //------------------------------------------------------------------------------------------------------------------
     private FriendDBManager()
@@ -698,5 +698,38 @@ public final class FriendDBManager
         }
 
         return reqestTargetUUIDs;
+    }
+
+    //------------------------------------------------------------------------------------------------------------------
+    public static boolean friendRequestExists(UUID senderUUID, UUID targetUUID)
+    {
+        if (senderUUID == null || targetUUID == null)
+        {
+            return false;
+        }
+
+        String sql = """
+        SELECT 1
+        FROM FriendRequests
+        WHERE SenderUUID = ? AND TargetUUID = ?
+        LIMIT 1
+        """;
+
+        try (Connection connection = QuantumDatabase.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql))
+        {
+            statement.setString(1, senderUUID.toString());
+            statement.setString(2, targetUUID.toString());
+
+            try (ResultSet resultSet = statement.executeQuery())
+            {
+                return resultSet.next();
+            }
+        }
+        catch (SQLException exception)
+        {
+            exception.printStackTrace();
+            return false;
+        }
     }
 }

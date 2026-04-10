@@ -2,6 +2,7 @@ package com.quantumparkour.command.commands;
 
 import com.quantumparkour.command.QuantumCommand;
 import com.quantumparkour.database.FriendDBManager;
+import com.quantumparkour.friend.FriendRequestNotification;
 import com.quantumparkour.util.MessageColorUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -14,9 +15,17 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.UUID;
 
+//----------------------------------------------------------------------------------------------------------------------
 public class FriendCMD implements QuantumCommand
 {
     private final String[] SUB_ARGS = {"help", "add", "accept", "reject", "block", "unblock", "remove", "list"};
+    private final FriendRequestNotification m_friendRequestNotification;
+
+    //------------------------------------------------------------------------------------------------------------
+    public FriendCMD(FriendRequestNotification friendRequestNotification)
+    {
+        m_friendRequestNotification = friendRequestNotification;
+    }
 
     //------------------------------------------------------------------------------------------------------------
     @Override
@@ -229,6 +238,7 @@ public class FriendCMD implements QuantumCommand
             return;
         }
 
+        m_friendRequestNotification.scheduleExpiryNotification(playerUUID, targetUUID);
         player.sendMessage(MessageColorUtils.translate("&2Friend request sent to &a" + target.getName() + " &7(Expires in 60s)"));
         target.sendMessage(MessageColorUtils.translate("&a" + player.getName() + " &2has sent you a friend request"));
     }

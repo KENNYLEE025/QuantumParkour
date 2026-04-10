@@ -1,5 +1,6 @@
 package com.quantumparkour;
 
+import com.quantumparkour.friend.FriendRequestNotification;
 import com.quantumparkour.level.Level;
 import com.quantumparkour.level.LevelManager;
 import com.quantumparkour.listener.*;
@@ -64,8 +65,8 @@ public final class QuantumParkour extends JavaPlugin
         playerManager = new PlayerManager();
         pracManager = new PracManager();
 
+        FriendRequestNotification friendRequestNotification = new FriendRequestNotification(this);
         //qwobitManager = new QwobitManager();
-
 
         registerEvents(
                 () -> new BlockEventListener(this),
@@ -74,7 +75,8 @@ public final class QuantumParkour extends JavaPlugin
                 PlayerLeaveListener::new,
                 PlayerRespawnListener::new,
                 ServerTickEndListener::new,
-                PortalListener::new
+                PortalListener::new,
+                FriendStatusListener::new
         );
         commandManager.registerCommands(
                 // QuantumPK only commands
@@ -90,8 +92,11 @@ public final class QuantumParkour extends JavaPlugin
                 QDebugCommand::new, // Register the QDebugCommand here
 
                 // Renatus + QuantumPK commands
-                FriendCMD::new
+                () -> new FriendCMD(friendRequestNotification)
+
         );
+
+        // getServer().getPluginManager().registerEvents(new FriendStatusListener(), this);
         configManager.registerConfigs(QuantumConfigs.values());
         levelManager.loadLevels(QuantumConfigs.LEVELS);
     }
