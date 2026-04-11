@@ -12,14 +12,20 @@ import org.bukkit.entity.Player;
 
 import org.jetbrains.annotations.NotNull;
 
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
+
 import java.util.List;
 import java.util.UUID;
 
 //----------------------------------------------------------------------------------------------------------------------
 public class FriendCMD implements QuantumCommand
 {
-    private final String[] SUB_ARGS = {"help", "add", "accept", "reject", "block", "unblock", "remove", "list", "togglesounds"};
+    private final String[] SUB_ARGS = {"help", "add", "accept", "reject", "block", "unblock", "remove", "list", "blockedlist", "togglesounds"};
     private final FriendRequestNotification m_friendRequestNotification;
+    private final int FRIENDS_PER_PAGE = 10;
 
     //------------------------------------------------------------------------------------------------------------------
     public FriendCMD(FriendRequestNotification friendRequestNotification)
@@ -56,11 +62,19 @@ public class FriendCMD implements QuantumCommand
             showFriendCommandUsage(player);
             return;
         }
+
         if (args[0].equalsIgnoreCase("list"))
         {
-            showFriendsList(player);
+            onShowFriendsList(player, args);
             return;
         }
+
+        if (args[0].equalsIgnoreCase("blockedlist"))
+        {
+            showBlockedList(player);
+            return;
+        }
+
         if (args[0].equalsIgnoreCase("togglesounds"))
         {
             onFriendSoundsToggle(player);
@@ -151,7 +165,27 @@ public class FriendCMD implements QuantumCommand
     }
 
     //------------------------------------------------------------------------------------------------------------------
-    private void showFriendsList(Player player)
+    private void onShowFriendsList(Player player, String[] args)
+    {
+        int friendsPageNumber = 1;
+        if (args.length >= 2)
+        {
+            try
+            {
+                friendsPageNumber = Integer.parseInt(args[1]);
+            }
+            catch(NumberFormatException exception)
+            {
+                player.sendMessage(MessageColorUtils.translate("&cInvalid page number. Usage: &a/friend list <page>"));
+                return;
+            }
+        }
+
+        showFriendsList(player, friendsPageNumber);
+    }
+
+    //------------------------------------------------------------------------------------------------------------------
+    private void showFriendsList(Player player, int friendsPageNumber)
     {
         List<UUID> friends = FriendDBManager.getFriendUUIDs(player.getUniqueId());
 
@@ -161,21 +195,108 @@ public class FriendCMD implements QuantumCommand
             return;
         }
 
-        player.sendMessage(MessageColorUtils.translate("&2&lYour Friends:"));
+        int totalFriends = friends.size();
+        int totalPages = (int) Math.ceil((double) totalFriends / FRIENDS_PER_PAGE);
 
-        for (UUID uuid : friends)
+        if (friendsPageNumber < 1)
         {
+            friendsPageNumber = 1;
+        }
+
+        if (friendsPageNumber > totalPages)
+        {
+            friendsPageNumber = totalPages;
+        }
+
+        int startIndex = (friendsPageNumber - 1) * FRIENDS_PER_PAGE;
+        int endIndex = Math.min(startIndex + FRIENDS_PER_PAGE, totalFriends);
+
+        // Formatting
+        player.sendMessage(MessageColorUtils.translate("&2&lYour Friends &a&l[Page &f&l" + friendsPageNumber + "&a&l/&f&l" + totalPages + "&a&l]"));
+
+        for (int index = startIndex; index < endIndex; index++)
+        {
+            UUID uuid = friends.get(index);
             Player friend = Bukkit.getPlayer(uuid);
 
-            if (friend != null)
+            if (friend != null && friend.isOnline())
             {
                 player.sendMessage(MessageColorUtils.translate("&a- " + friend.getName() + " &7(Online)"));
-            } 
+            }
             else
             {
                 OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
                 String offlinePlayerName = offlinePlayer.getName() != null ? offlinePlayer.getName() : uuid.toString();
-                player.sendMessage(MessageColorUtils.translate("&7- " + offlinePlayerName + " (Offline)"));
+                player.sendMessage(MessageColorUtils.translate("&7- " + offlinePlayerName + " &8(Offline)"));
+            }
+        }
+
+        sendFriendListPaginationButtons(player, friendsPageNumber, totalPages);
+    }
+
+    //------------------------------------------------------------------------------------------------------------------
+    private void sendFriendListPaginationButtons(Player player, int currentPage, int totalPages)
+    {
+        if (totalPages <= 1)
+        {
+            return;
+        }
+
+        TextComponent previousButton;
+        if (currentPage > 1)
+        {
+            previousButton = new TextComponent(MessageColorUtils.translate("&a<< Prev"));
+            previousButton.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND,  "/friend list " + (currentPage - 1)));
+            previousButton.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT,  new ComponentBuilder(MessageColorUtils.translate("&2Go to page &a" + (currentPage - 1))).create()));
+        }
+        else
+        {
+            previousButton = new TextComponent(MessageColorUtils.translate("&7<< Prev"));
+        }
+
+        TextComponent spacer = new TextComponent(" ");
+
+        TextComponent nextButton;
+        if (currentPage < totalPages)
+        {
+            nextButton = new TextComponent(MessageColorUtils.translate("&aNext >>"));
+            nextButton.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/friend list " + (currentPage + 1)));
+            nextButton.setHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, new ComponentBuilder(MessageColorUtils.translate("&2Go to page &a" + (currentPage + 1))).create()));
+        }
+        else
+        {
+            nextButton = new TextComponent(MessageColorUtils.translate("&7Next >>"));
+        }
+
+        player.spigot().sendMessage(previousButton, spacer, nextButton);
+    }
+
+    //------------------------------------------------------------------------------------------------------------------
+    private void showBlockedList(Player player)
+    {
+        List<UUID> blockedPlayers = FriendDBManager.getBlockedUUIDs(player.getUniqueId());
+
+        if (blockedPlayers.isEmpty())
+        {
+            player.sendMessage(MessageColorUtils.translate("&cYou have no blocked players."));
+            return;
+        }
+
+        player.sendMessage(MessageColorUtils.translate("&2&Blcoked players:"));
+
+        for (UUID uuid : blockedPlayers)
+        {
+            Player blockedPlayer = Bukkit.getPlayer(uuid);
+
+            if (blockedPlayer != null)
+            {
+                player.sendMessage(MessageColorUtils.translate("&4- " + blockedPlayer.getName()));
+            }
+            else
+            {
+                OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
+                String offlinePlayerName = offlinePlayer.getName() != null ? offlinePlayer.getName() : uuid.toString();
+                player.sendMessage(MessageColorUtils.translate("&4- " + offlinePlayerName));
             }
         }
     }
@@ -191,7 +312,7 @@ public class FriendCMD implements QuantumCommand
         }
 
         player.sendMessage(MessageColorUtils.translate("&2You accepted &a" + target.getName() + "'s &2friend request"));
-        target.sendMessage(MessageColorUtils.translate(player.getName() + " &2has accepted your friend request"));
+        target.sendMessage(MessageColorUtils.translate("&a" + player.getName() + " &2has accepted your friend request"));
     }
 
     //------------------------------------------------------------------------------------------------------------------
@@ -320,6 +441,9 @@ public class FriendCMD implements QuantumCommand
         player.sendMessage(MessageColorUtils.translate("&a/friend remove <username>. "));
         player.sendMessage(MessageColorUtils.translate("&a/friend block <username>. "));
         player.sendMessage(MessageColorUtils.translate("&a/friend unblock <username>. "));
+        player.sendMessage(MessageColorUtils.translate("&a/friend list &7- View your friends"));
+        player.sendMessage(MessageColorUtils.translate("&a/friend list <page> &7- View a specific page"));
+        player.sendMessage(MessageColorUtils.translate("&a/friend blockedlist. "));
         player.sendMessage(MessageColorUtils.translate("&a/friend togglesounds. "));
     }
 
