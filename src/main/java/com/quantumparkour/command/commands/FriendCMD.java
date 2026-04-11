@@ -18,23 +18,23 @@ import java.util.UUID;
 //----------------------------------------------------------------------------------------------------------------------
 public class FriendCMD implements QuantumCommand
 {
-    private final String[] SUB_ARGS = {"help", "add", "accept", "reject", "block", "unblock", "remove", "list"};
+    private final String[] SUB_ARGS = {"help", "add", "accept", "reject", "block", "unblock", "remove", "list", "togglesounds"};
     private final FriendRequestNotification m_friendRequestNotification;
 
-    //------------------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------
     public FriendCMD(FriendRequestNotification friendRequestNotification)
     {
         m_friendRequestNotification = friendRequestNotification;
     }
 
-    //------------------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------
     @Override
     public String getName()
     {
         return "friend";
     }
 
-    //------------------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------
     @Override
     public void execute(@NotNull CommandSender sender, @NotNull Command command, @NotNull String label, @NotNull String[] args)
     {
@@ -59,6 +59,11 @@ public class FriendCMD implements QuantumCommand
         if (args[0].equalsIgnoreCase("list"))
         {
             showFriendsList(player);
+            return;
+        }
+        if (args[0].equalsIgnoreCase("togglesounds"))
+        {
+            onFriendSoundsToggle(player);
             return;
         }
 
@@ -117,7 +122,7 @@ public class FriendCMD implements QuantumCommand
         }
     }
 
-    //------------------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------
     private boolean isSubCommandValid(String subCommand)
     {
         for (String subCommandIndex : SUB_ARGS)
@@ -130,7 +135,22 @@ public class FriendCMD implements QuantumCommand
         return false;
     }
 
-    //------------------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------
+    private void onFriendSoundsToggle(Player player)
+    {
+        boolean newValue = FriendDBManager.toggleFriendNotificationSounds(player.getUniqueId());
+
+        if (newValue)
+        {
+            player.sendMessage(MessageColorUtils.translate("&a[Friends] &2Friend notification sounds have been &aenabled&2."));
+        }
+        else
+        {
+            player.sendMessage(MessageColorUtils.translate("&a[Friends] &2Friend notification sounds have been &cdisabled&2."));
+        }
+    }
+
+    //------------------------------------------------------------------------------------------------------------------
     private void showFriendsList(Player player)
     {
         List<UUID> friends = FriendDBManager.getFriendUUIDs(player.getUniqueId());
@@ -150,7 +170,8 @@ public class FriendCMD implements QuantumCommand
             if (friend != null)
             {
                 player.sendMessage(MessageColorUtils.translate("&a- " + friend.getName() + " &7(Online)"));
-            } else
+            } 
+            else
             {
                 OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
                 String offlinePlayerName = offlinePlayer.getName() != null ? offlinePlayer.getName() : uuid.toString();
@@ -159,7 +180,7 @@ public class FriendCMD implements QuantumCommand
         }
     }
 
-    //------------------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------
     private void onFriendAccept(Player player, Player target)
     {
         boolean isFriendAcceptSuccessful = FriendDBManager.acceptFriendRequest(player.getUniqueId(), target.getUniqueId());
@@ -173,7 +194,7 @@ public class FriendCMD implements QuantumCommand
         target.sendMessage(MessageColorUtils.translate(player.getName() + " &2has accepted your friend request"));
     }
 
-    //------------------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------
     private void onFriendReject(Player player, Player target)
     {
         boolean isFriendRejectSuccessful = FriendDBManager.rejectFriendRequest(player.getUniqueId(), target.getUniqueId());
@@ -187,7 +208,7 @@ public class FriendCMD implements QuantumCommand
         target.sendMessage(MessageColorUtils.translate("&2Your friend request to &a" + player.getName() + " &2has been rejected"));
     }
 
-    //------------------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------
     private void onFriendAdd(Player player, Player target)
     {
         UUID playerUUID = player.getUniqueId();
@@ -240,9 +261,10 @@ public class FriendCMD implements QuantumCommand
 
         m_friendRequestNotification.scheduleExpiryNotification(playerUUID, targetUUID);
         player.sendMessage(MessageColorUtils.translate("&2Friend request sent to &a" + target.getName() + " &7(Expires in 60s)"));
-        target.sendMessage(MessageColorUtils.translate("&a" + player.getName() + " &2has sent you a friend request"));
+        m_friendRequestNotification.sendIncomingFriendRequestNotification(player, target);
     }
 
+    //------------------------------------------------------------------------------------------------------------------
     private void onRfriendUnblock(Player player, Player target)
     {
         boolean isFriendUnblockSuccessful = FriendDBManager.unblockPlayer(player.getUniqueId(), target.getUniqueId());
@@ -256,7 +278,7 @@ public class FriendCMD implements QuantumCommand
 
     }
 
-    //------------------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------
     private void onFriendBlock(Player player, Player target)
     {
         boolean isFriendBlockedSuccessful = FriendDBManager.blockPlayer(player.getUniqueId(), target.getUniqueId());
@@ -269,7 +291,7 @@ public class FriendCMD implements QuantumCommand
         player.sendMessage(MessageColorUtils.translate("&a" + target.getName() + " &2has been blocked"));
     }
 
-    //------------------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------
     private void onFriendRemove(Player player, Player target)
     {
         boolean isFriendRemoveSuccessful = FriendDBManager.removeFriend(player.getUniqueId(), target.getUniqueId());
@@ -282,13 +304,13 @@ public class FriendCMD implements QuantumCommand
         player.sendMessage(MessageColorUtils.translate("&2You have removed &a" + target.getName() + " &2from your friends list"));
     }
 
-    //------------------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------
     private void showSameUserFriendRequest(Player player)
     {
         player.sendMessage((MessageColorUtils.translate("&2You cannot add yourself as a friend")));
     }
 
-    //------------------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------
     private void showFriendCommandUsage(Player player)
     {
         player.sendMessage(MessageColorUtils.translate("&2&l[Friends] &2/friend usage"));
@@ -298,21 +320,22 @@ public class FriendCMD implements QuantumCommand
         player.sendMessage(MessageColorUtils.translate("&a/friend remove <username>. "));
         player.sendMessage(MessageColorUtils.translate("&a/friend block <username>. "));
         player.sendMessage(MessageColorUtils.translate("&a/friend unblock <username>. "));
+        player.sendMessage(MessageColorUtils.translate("&a/friend togglesounds. "));
     }
 
-    //------------------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------
     private void showInvalidUsername(Player player)
     {
         player.sendMessage(MessageColorUtils.translate("&cThat player is not online."));
     }
 
-    //------------------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------
     private void showInvalidSubCommand(Player player)
     {
         player.sendMessage(MessageColorUtils.translate("&cThat command is not valid. Type /friend help for the list of commands for friends."));
     }
 
-    //------------------------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------
     private void showIncompleteCommand(Player player)
     {
         player.sendMessage(MessageColorUtils.translate("&cThat command is in progress. Please try again later"));

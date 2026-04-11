@@ -3,6 +3,7 @@ package com.quantumparkour.listener;
 import com.quantumparkour.database.FriendDBManager;
 import com.quantumparkour.util.MessageColorUtils;
 import org.bukkit.Bukkit;
+import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -32,7 +33,7 @@ public class FriendStatusListener implements Listener
     }
 
     //------------------------------------------------------------------------------------------------------------------
-    private void notifyFriends(Player targetPlayer, boolean joined)
+    private void notifyFriends(Player targetPlayer, boolean didFriendJoined)
     {
         List<UUID> friendUUIDs = FriendDBManager.getFriendUUIDs(targetPlayer.getUniqueId());
 
@@ -44,13 +45,19 @@ public class FriendStatusListener implements Listener
                 continue;
             }
 
-            if (joined)
+            if (didFriendJoined)
             {
-                friendPlayer.sendMessage(MessageColorUtils.translate("&a[Friends] &2Your friend, &a" + targetPlayer.getName() + ", &2has joined the server."));
+                friendPlayer.sendMessage(MessageColorUtils.translate("&a[Friends] &2Your friend &a" + targetPlayer.getName() + " &2has joined the server."));
+                if (FriendDBManager.areFriendNotificationSoundsEnabled(friendPlayer.getUniqueId()))
+                {
+                    float volume = 1.0f;
+                    float pitch = 1.0f;
+                    friendPlayer.playSound(friendPlayer.getLocation(), Sound.ENTITY_EXPERIENCE_ORB_PICKUP, volume, pitch);
+                }
             }
             else
             {
-                friendPlayer.sendMessage(MessageColorUtils.translate("&a[Friends] &2Your friend, &a" + targetPlayer.getName() + ", &chas left the server."));
+                friendPlayer.sendMessage(MessageColorUtils.translate("&a[Friends] &2Your friend &a" + targetPlayer.getName() + " &chas left the server."));
             }
         }
     }

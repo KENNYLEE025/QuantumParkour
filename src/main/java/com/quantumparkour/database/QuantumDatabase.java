@@ -52,7 +52,7 @@ public class QuantumDatabase
         }
     }
 
-    //---------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------
     public static void close()
     {
         if (m_dataSource != null && !m_dataSource.isClosed())
@@ -69,11 +69,12 @@ public class QuantumDatabase
                getCreatePlayersTableQuery(),
                getCreateFriendsTableQuery(),
                getCreateFriendRequestTableQuery(),
-               getCreateBlockedPlayersTableQuery()
+               getCreateBlockedPlayersTableQuery(),
+               getCreateFriendSettingsTableQuery()
             );
     }
 
-    //---------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------
     private static String getCreatePlayersTableQuery()
     {
         return """
@@ -86,7 +87,7 @@ public class QuantumDatabase
             """;
     }
 
-    //---------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------
     private static String getCreateFriendsTableQuery()
     {
         return """
@@ -100,7 +101,7 @@ public class QuantumDatabase
             """;
     }
 
-    //---------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------
     private static String getCreateBlockedPlayersTableQuery()
     {
         return """
@@ -114,7 +115,7 @@ public class QuantumDatabase
             """;
     }
 
-    //---------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------
     private static String getCreateFriendRequestTableQuery()
     {
         return """
@@ -130,7 +131,19 @@ public class QuantumDatabase
         """;
     }
 
-    //---------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------
+    private static String getCreateFriendSettingsTableQuery()
+    {
+        return """
+        CREATE TABLE IF NOT EXISTS FriendSettings (
+            PlayerUUID TEXT PRIMARY KEY NOT NULL,
+            NotificationSoundsEnabled INTEGER NOT NULL DEFAULT 1,
+            FOREIGN KEY (PlayerUUID) REFERENCES Players(UUID)
+        );
+        """;
+    }
+
+    //------------------------------------------------------------------------------------------------------------------
     private static String getCreateLevelsTableQuery()
     {
         return """
@@ -148,7 +161,7 @@ public class QuantumDatabase
         """;
     }
 
-    //---------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------
     private static void executeStatements(String... sqlStatements)
     {
         try (Connection connection = getConnection();
@@ -166,7 +179,7 @@ public class QuantumDatabase
         }
     }
 
-    //---------------------------------------------------------------------------------------------
+    //------------------------------------------------------------------------------------------------------------------
     public static Connection getConnection() throws SQLException
     {
         if (m_dataSource == null)

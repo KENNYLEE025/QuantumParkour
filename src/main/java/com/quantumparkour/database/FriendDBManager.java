@@ -732,4 +732,80 @@ public final class FriendDBManager
             return false;
         }
     }
+
+    //------------------------------------------------------------------------------------------------------------------
+    public static boolean areFriendNotificationSoundsEnabled(UUID playerUUID)
+    {
+        if (playerUUID == null)
+        {
+            return true;
+        }
+
+        String sql = """
+        SELECT NotificationSoundsEnabled
+        FROM FriendSettings
+        WHERE PlayerUUID = ?
+        LIMIT 1
+        """;
+
+        try (Connection connection = QuantumDatabase.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql))
+        {
+            statement.setString(1, playerUUID.toString());
+
+            try (ResultSet resultSet = statement.executeQuery())
+            {
+                if (resultSet.next())
+                {
+                    return resultSet.getInt("NotificationSoundsEnabled") == 1;
+                }
+
+                return true;
+            }
+        }
+        catch (SQLException exception)
+        {
+            exception.printStackTrace();
+            return true;
+        }
+    }
+
+    //------------------------------------------------------------------------------------------------------------------
+    public static boolean setFriendNotificationSoundsEnabled(UUID playerUUID, boolean enabled)
+    {
+        if (playerUUID == null)
+        {
+            return false;
+        }
+
+        String sql = """
+        INSERT INTO FriendSettings (PlayerUUID, NotificationSoundsEnabled)
+        VALUES (?, ?)
+        ON CONFLICT(PlayerUUID) DO UPDATE SET NotificationSoundsEnabled = excluded.NotificationSoundsEnabled
+        """;
+
+        try (Connection connection = QuantumDatabase.getConnection();
+             PreparedStatement statement = connection.prepareStatement(sql))
+        {
+            statement.setString(1, playerUUID.toString());  // PlayerUUID
+            statement.setInt(2, enabled ? 1 : 0);           // Notification Sounds Enabled (false / true)
+
+            return statement.executeUpdate() > 0;
+        }
+        catch (SQLException exception)
+        {
+            exception.printStackTrace();
+            return false;
+        }
+    }
+
+    //------------------------------------------------------------------------------------------------------------------
+    public static boolean toggleFriendNotificationSounds(UUID playerUUID)
+    {
+        boolean currentNotificationSoundSetting  = areFriendNotificationSoundsEnabled(playerUUID);
+        boolean updatedNotificationSoundSetting = !currentNotificationSoundSetting;
+        boolean isEnablingSoundsSuccessful = setFriendNotificationSoundsEnabled(playerUUID, updatedNotificationSoundSetting);
+
+        return isEnablingSoundsSuccessful ? updatedNotificationSoundSetting : currentNotificationSoundSetting;
+    }
 }

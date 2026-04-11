@@ -2,6 +2,10 @@ package com.quantumparkour.friend;
 
 import com.quantumparkour.database.FriendDBManager;
 import com.quantumparkour.util.MessageColorUtils;
+import net.md_5.bungee.api.chat.ClickEvent;
+import net.md_5.bungee.api.chat.ComponentBuilder;
+import net.md_5.bungee.api.chat.HoverEvent;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -17,6 +21,32 @@ public class FriendRequestNotification
     public FriendRequestNotification(JavaPlugin plugin)
     {
         this.plugin = plugin;
+    }
+
+
+    //------------------------------------------------------------------------------------------------------------------
+    public void sendIncomingFriendRequestNotification(Player sender, Player target)
+    {
+        if (sender == null || target == null)
+        {
+            return;
+        }
+
+        target.sendMessage(MessageColorUtils.translate("&a" + sender.getName() + " &2has sent you a friend request."));
+
+        HoverEvent.Action showTextAction = net.md_5.bungee.api.chat.HoverEvent.Action.SHOW_TEXT;
+
+        TextComponent acceptText = new TextComponent(MessageColorUtils.translate("&a&l[ACCEPT]"));
+        String acceptTextOnHover = MessageColorUtils.translate("&2Click to accept &a" + sender.getName() + "'s &2friend request.");
+        acceptText.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/friend accept " + sender.getName()));
+        acceptText.setHoverEvent(new net.md_5.bungee.api.chat.HoverEvent(showTextAction, new ComponentBuilder(acceptTextOnHover).create()));
+
+        TextComponent rejectText = new TextComponent(MessageColorUtils.translate(" &c&l[REJECT]"));
+        String rejectTextOnHover = MessageColorUtils.translate("&2Click to reject &a" + sender.getName() + "'s &2friend request.");
+        rejectText.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/friend reject " + sender.getName()));
+        rejectText.setHoverEvent(new net.md_5.bungee.api.chat.HoverEvent(showTextAction, new ComponentBuilder(rejectTextOnHover).create()));
+
+        target.spigot().sendMessage(acceptText, rejectText);
     }
 
     //------------------------------------------------------------------------------------------------------------------
