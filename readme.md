@@ -1,7 +1,7 @@
 # Quantum Parkour
 
 ## Overview
-Quantum Parkour is a feature-rich Minecraft Java Edition plugin designed for **version 1.21.4**. It provides a complete parkour gaming experience with checkpoint systems, level management, database integration, and enhanced visual customization options. Whether you're running a Bukkit server or a Bungee network, Quantum Parkour offers the tools to create engaging parkour challenges and competitions for your players.
+Quantum Parkour is a feature-rich Minecraft Java Edition plugin designed for **version 1.21.4**. It provides a complete parkour gaming experience with checkpoint systems, level management, database integration, and enhanced visual customization options.
 
 ## Features
 
